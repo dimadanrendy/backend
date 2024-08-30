@@ -7,6 +7,7 @@ import useDocumentsRoute from "./routes/useDocumentsRoute.js";
 import usePhotosRoute from "./routes/usePhotosRoute.js";
 import useVideosRoute from "./routes/useVideosRoute.js";
 import useUsersRoute from "./routes/useUsersRoute.js";
+import useAuthRoute from "./routes/useAuthRoute.js";
 
 // Middleware
 import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
@@ -33,6 +34,7 @@ app.use(`${PATCH}/documents`, useDocumentsRoute);
 app.use(`${PATCH}/photos`, usePhotosRoute);
 app.use(`${PATCH}/videos`, useVideosRoute);
 app.use(`${PATCH}/users`, useUsersRoute);
+app.use(`${PATCH}/auth`, useAuthRoute);
 
 app.use((req, res, next) => {
   res.status(404).send("Halaman tidak ditemukan");
