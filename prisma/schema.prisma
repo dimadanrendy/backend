@@ -15,18 +15,80 @@ datasource db {
 
 
 model User {
-  id    Int     @id @default(autoincrement())
+  id_users    String @id @default(cuid())
   email String  @unique
   name  String?
-  posts Post[]
+  username String @unique
+  password String
+  role      String
+  bidang    String
+  image     String
+  status    Boolean @default(true)
+  posts_documents Documents[]
+  posts_photos Photos[]
+  posts_videos Videos[]
+  posts_session Session?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
+model Documents {
+  id_videos Int     @id @default(autoincrement())
+  nomor     String
+  judul     String
+  tipe_dokumen String
+  dokumen   String
+  bidang    String
+  singkatan String
+  tahun     String
+  bahasa    String
+  tempat_penetapan String
+  sumber    String
+  lokasi    String
+  file      String
   published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id])
-  authorId  Int
+  author    User    @relation(fields: [authorId], references: [id_users])
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
 }
 
+model Photos {
+  id_photos Int @id @default(autoincrement())
+  judul     String
+  huruf_besar String
+  deskripsi String
+  bidang    String
+  tanggal   String
+  file      String
+  published Boolean @default(false)
+  author    User    @relation(fields: [authorId], references: [id_users])
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Videos {
+  id_photos Int @id @default(autoincrement())
+  judul     String
+  huruf_besar String
+  deskripsi String @db.LongText
+  bidang    String
+  tanggal   String
+  file      String
+  published Boolean @default(false)
+  author    User    @relation(fields: [authorId], references: [id_users])
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id_session Int @id @default(autoincrement())
+  login_session      DateTime @default(now())
+  expire_session     DateTime 
+  author    User @relation(fields: [authorId], references: [id_users])
+  authorId  String @unique
+}

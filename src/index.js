@@ -4,6 +4,8 @@ import cors from "cors";
 
 // Routing
 import useDocumentsRoute from "./routes/useDocumentsRoute.js";
+import usePhotosRoute from "./routes/usePhotosRoute.js";
+import useVideosRoute from "./routes/useVideosRoute.js";
 
 // Middleware
 import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
@@ -27,6 +29,8 @@ app.use(tokenAccessServer);
 
 // Routes
 app.use(`${PATCH}/documents`, useDocumentsRoute);
+app.use(`${PATCH}/photos`, usePhotosRoute);
+app.use(`${PATCH}/videos`, useVideosRoute);
 
 app.use((req, res, next) => {
   res.status(404).send("Halaman tidak ditemukan");
