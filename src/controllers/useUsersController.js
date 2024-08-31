@@ -1,32 +1,18 @@
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import dotenv from "dotenv";
+dotenv.config();
 
-// export const GetAllDetailUsers = async (req, res) => {
-//   try {
-//     const users = await prisma.user.findMany({
-//       include: {
-//         posts_session: true,
-//         posts_photos: true,
-//         posts_videos: true,
-//       },
-//     });
-//     return res.status(200).json({
-//       status: true,
-//       message: "Success",
-//       data: users,
-//     });
-//   } catch (error) {
-//     return res.status(500).json({
-//       status: false,
-//       message: "Please try again",
-//       msg: error.message,
-//     });
-//   }
-// };
+const prismaPrimary = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.PRIMARY_DATABASE_URL,
+    },
+  },
+});
 
 export const GetUsers = async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prismaPrimary.user.findMany();
     return res.status(200).json({
       status: true,
       message: "Success",

@@ -22,7 +22,7 @@ model User {
   password String
   role      String
   bidang    String
-  image     String
+  image     String?
   status    Boolean @default(true)
   posts_documents Documents[]
   posts_photos Photos[]
@@ -35,16 +35,16 @@ model User {
 
 model Documents {
   id_videos Int     @id @default(autoincrement())
-  nomor     String
+  nomor     String?
   judul     String
-  tipe_dokumen String
-  dokumen   String
+  tipe_dokumen String?
+  dokumen   String?
   bidang    String
-  singkatan String
+  singkatan String?
   tahun     String
-  bahasa    String
+  bahasa    String?
   tempat_penetapan String
-  sumber    String
+  sumber    String?
   lokasi    String
   file      String
   published Boolean @default(false)
@@ -59,7 +59,7 @@ model Photos {
   id_photos Int @id @default(autoincrement())
   judul     String
   huruf_besar String
-  deskripsi String
+  deskripsi String @db.LongText
   bidang    String
   tanggal   String
   file      String
@@ -89,6 +89,10 @@ model Session {
   id_session Int @id @default(autoincrement())
   login_session      DateTime @default(now())
   expire_session     DateTime 
+  role               String 
+  username           String
+  refresh_session    String?
+  status_login       Boolean @default(false)
   author    User @relation(fields: [authorId], references: [id_users])
   authorId  String @unique
 }
