@@ -7,6 +7,8 @@ import {
   GetPhotosById,
 } from "../controllers/usePhotosController.js";
 
+import { validatePhotos } from "../middleware/useValidator.js";
+
 const router = express.Router();
 
 // Routes Photos

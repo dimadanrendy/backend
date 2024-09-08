@@ -7,6 +7,8 @@ import {
   GetDocumentsById,
 } from "../controllers/useDocumentsController.js";
 
+import { validateDocuments } from "../middleware/useValidator.js";
+
 const router = express.Router();
 const PATCH = process.env.BASE_ROUTE;
 

@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 // Routing
 import useDocumentsRoute from "./routes/useDocumentsRoute.js";
@@ -11,12 +12,6 @@ import useAuthRoute from "./routes/useAuthRoute.js";
 
 // Middleware
 import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
-import {
-  validateUser,
-  validateDocuments,
-  validatePhotos,
-  validateVideos,
-} from "./middleware/useValidator.js";
 
 dotenv.config();
 
@@ -35,11 +30,14 @@ app.use(
 app.use(express.json());
 app.use(tokenAccessServer);
 
+// Middleware cookie parser
+app.use(cookieParser());
+
 // Routes Handler
-app.use(`${PATCH}/documents`, validateDocuments, useDocumentsRoute);
-app.use(`${PATCH}/photos`, validatePhotos, usePhotosRoute);
-app.use(`${PATCH}/videos`, validateVideos, useVideosRoute);
-app.use(`${PATCH}/users`, validateUser, useUsersRoute);
+app.use(`${PATCH}/documents`, useDocumentsRoute);
+app.use(`${PATCH}/photos`, usePhotosRoute);
+app.use(`${PATCH}/videos`, useVideosRoute);
+app.use(`${PATCH}/users`, useUsersRoute);
 app.use(`${PATCH}/auth`, useAuthRoute);
 
 app.use((req, res, next) => {

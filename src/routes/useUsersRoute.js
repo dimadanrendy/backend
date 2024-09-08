@@ -7,13 +7,15 @@ import {
   GetUsersById,
 } from "../controllers/useUsersController.js";
 
+import { validateUser } from "../middleware/useValidator.js";
+
 const router = express.Router();
 
 // Routes Users
 router.get("/", GetUsers);
 router.get("/", GetUsers);
 router.get("/:id", GetUsersById);
-router.post("/", PostUsers);
+router.post("/", validateUser, PostUsers);
 router.patch("/:id", PatchUsers);
 router.delete("/:id", DeleteUsers);
 

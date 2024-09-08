@@ -2,10 +2,11 @@ import express from "express";
 import {
   GetAuth,
   PostAuth,
-  PatchAuth,
   DeleteAuth,
   GetAuthById,
+  RefreshSession,
 } from "../controllers/useAuthController.js";
+// import { validateAuth } from "../middleware/useValidator.js";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const router = express.Router();
 router.get("/", GetAuth);
 router.get("/:id", GetAuthById);
 router.post("/", PostAuth);
-router.patch("/:id", PatchAuth);
+router.patch("/:refresh_session", RefreshSession);
 router.delete("/:id", DeleteAuth);
 
 export default router;

@@ -7,6 +7,8 @@ import {
   GetVideosById,
 } from "../controllers/useVideosController.js";
 
+import { validateVideos } from "../middleware/useValidator.js";
+
 const router = express.Router();
 
 // Routes Videos

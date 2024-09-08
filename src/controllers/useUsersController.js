@@ -1,44 +1,124 @@
-import { PrismaClient } from "@prisma/client";
-import dotenv from "dotenv";
-dotenv.config();
-
-const prismaPrimary = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.PRIMARY_DATABASE_URL,
-    },
-  },
-});
+import { UsersService } from "../service/useUsersService.js";
 
 export const GetUsers = async (req, res) => {
+  const users = await UsersService.getUsers();
+  return res.status(200).json({
+    status_code: 200,
+    status: true,
+    message: "Success",
+    data: users,
+  });
+};
+
+export const PostUsers = async (req, res) => {
+  const user = await UsersService.postUsers(req);
+  return res.status(201).json({
+    status_code: 201,
+    status: true,
+    message: "User created successfully",
+  });
+};
+
+export const PatchUsers = async (req, res) => {
   try {
-    const users = await prismaPrimary.user.findMany();
+    const { id } = req.params;
+    const user = await UsersService.patchUsers(id, req.body);
     return res.status(200).json({
+      status_code: 200,
       status: true,
-      message: "Success",
-      data: users,
+      message: "Success update user",
     });
   } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({
+        status_code: 404,
+        status: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Password doesn't match") {
+      return res.status(400).json({
+        status_code: 400,
+        status: false,
+        message: error.message,
+      });
+    }
+    // Jika kesalahan tidak spesifik
     return res.status(500).json({
+      status_code: 500,
       status: false,
-      message: "Please try again",
-      msg: error.message,
+      message: "Internal server error",
+      message_error: error.message,
     });
   }
 };
 
-export const PostUsers = (req, res) => {
-  res.send("Hello World!");
+export const DeleteUsers = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await UsersService.deleteUser(id);
+    return res.status(200).json({
+      status_code: 200,
+      status: true,
+      message: "Success delete user",
+    });
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({
+        status_code: 404,
+        status: false,
+        message: error.message,
+      });
+    }
+    // Jika kesalahan tidak spesifik
+    return res.status(500).json({
+      status_code: 500,
+      status: false,
+      message: "Internal server error",
+      message_error: error.message,
+    });
+  }
 };
 
-export const PatchUsers = (req, res) => {
-  res.send("Hello World!");
-};
+export const GetUsersById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        status_code: 400,
+        status: false,
+        message: "ID is required",
+      });
+    }
+    const user = await UsersService.getUsersById(id);
 
-export const DeleteUsers = (req, res) => {
-  res.send("Hello World!");
-};
-
-export const GetUsersById = (req, res) => {
-  res.send("Hello World!");
+    if (!user) {
+      return res.status(404).json({
+        status_code: 404,
+        status: false,
+        message: "User not found",
+      });
+    }
+    return res.status(200).json({
+      status_code: 200,
+      status: true,
+      message: "Success",
+      data: user,
+    });
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({
+        status_code: 404,
+        status: false,
+        message: error.message,
+      });
+    }
+    // Jika kesalahan tidak spesifik
+    return res.status(500).json({
+      status_code: 500,
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };

@@ -52,11 +52,26 @@ export const validateUser = [
       return true;
     }),
 
-  body("role").trim().escape().notEmpty().withMessage("Role is required"),
+  body("role")
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage("Role is required")
+    .custom((value) => {
+      if (value !== "admin" && value !== "user" && value !== "superadmin") {
+        throw new Error("Invalid role");
+      }
+      return true;
+    }),
 
   body("bidang").trim().escape().notEmpty().withMessage("Bidang is required"),
 
-  body("status").trim().escape().notEmpty().withMessage("Status is required"),
+  body("status")
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage("Status is required")
+    .toBoolean(), // Mengubah status menjadi boolean
 
   // Cek hasil validasi dan kirim error jika ada
   (req, res, next) => {
@@ -197,3 +212,20 @@ export const validateVideos = [
     next(); // Lanjutkan ke handler berikutnya jika tidak ada error
   },
 ];
+
+// export const validateAuth = [
+//   body("username").trim().escape().withMessage("Username is required"),
+
+//   body("email").trim().escape().notEmpty().withMessage("Email is required"),
+
+//   body("password").trim().escape().withMessage("Password is required"),
+
+//   // Cek 🙂 validasi dan kirim error jika ada
+//   (req, res, next) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       return res.status(422).json({ errors: errors.array() });
+//     }
+//     next(); // Lanjutkan ke handler berikutnya jika tidak ada error
+//   },
+// ];

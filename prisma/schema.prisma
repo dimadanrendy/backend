@@ -24,9 +24,9 @@ model User {
   bidang    String
   image     String?
   status    Boolean @default(true)
-  posts_documents Documents[]
-  posts_photos Photos[]
-  posts_videos Videos[]
+  posts_documents Documents[] 
+  posts_photos Photos[] 
+  posts_videos Videos[] 
   posts_session Session?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -48,8 +48,8 @@ model Documents {
   lokasi    String
   file      String
   published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id_users])
-  authorId  String
+  author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
+  authorId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -64,8 +64,8 @@ model Photos {
   tanggal   String
   file      String
   published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id_users])
-  authorId  String
+  author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
+  authorId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -79,8 +79,8 @@ model Videos {
   tanggal   String
   file      String
   published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id_users])
-  authorId  String
+  author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
+  authorId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -91,8 +91,9 @@ model Session {
   expire_session     DateTime 
   role               String 
   username           String
+  email              String
   refresh_session    String?
   status_login       Boolean @default(false)
-  author    User @relation(fields: [authorId], references: [id_users])
+  author    User @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
   authorId  String @unique
 }
