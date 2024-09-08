@@ -13,7 +13,6 @@ const router = express.Router();
 
 // Routes Users
 router.get("/", GetUsers);
-router.get("/", GetUsers);
 router.get("/:id", GetUsersById);
 router.post("/", validateUser, PostUsers);
 router.patch("/:id", PatchUsers);

@@ -236,4 +236,35 @@ export const AuthService = {
       };
     }
   },
+
+  async GetSessionById(id) {
+    try {
+      console.log("id", id);
+
+      const session = await prisma.session.findFirst({
+        where: { authorId: id },
+      });
+
+      if (!session) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Session not found",
+        };
+      }
+
+      return {
+        status_code: 200,
+        status: true,
+        message: "Session found",
+        session: session,
+      };
+    } catch (error) {
+      return {
+        status_code: 500,
+        status: false,
+        message: error.message,
+      };
+    }
+  },
 };

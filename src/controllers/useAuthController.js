@@ -57,6 +57,18 @@ export const DeleteAuth = async (req, res) => {
   return res.status(200).json(session);
 };
 
-export const GetAuthById = (req, res) => {
-  res.send("Hello World!");
+export const GetAuthById = async (req, res) => {
+  const { id } = req.params;
+  const session = await AuthService.GetSessionById(id);
+
+  if (session.status === false) {
+    return res.status(400).json({
+      status_code: session.status_code,
+      status: session.status,
+      message: session.message,
+      session: session ? session : null,
+    });
+  }
+
+  return res.status(200).json(session);
 };

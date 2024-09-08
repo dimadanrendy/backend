@@ -86,7 +86,7 @@ export const UsersService = {
       }
       return users;
     } catch (error) {
-      return res.status(500).json({
+      return res.json({
         status_code: 500,
         status: false,
         message: "Internal server error",

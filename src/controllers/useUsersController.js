@@ -84,6 +84,7 @@ export const DeleteUsers = async (req, res) => {
 export const GetUsersById = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("id", id);
     if (!id) {
       return res.status(400).json({
         status_code: 400,
