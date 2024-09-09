@@ -31,8 +31,7 @@ export const AuthService = {
         return {
           status_code: 400,
           status: false,
-          message: "Session already exists",
-          session_user: existingSession,
+          message: "Session already exists for this user",
         };
       }
 
@@ -43,9 +42,9 @@ export const AuthService = {
 
       if (!user) {
         return {
-          status_code: 400,
+          status_code: 404,
           status: false,
-          message: "User not found",
+          message: "Invalid username or password",
         };
       }
 
@@ -53,16 +52,16 @@ export const AuthService = {
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return {
-          status_code: 400,
+          status_code: 404,
           status: false,
-          message: "Invalid password",
+          message: "Invalid username or password",
         };
       }
 
       // Cek apakah user aktif
       if (!user.status) {
         return {
-          status_code: 400,
+          status_code: 404,
           status: false,
           message: "User not active",
         };
@@ -156,8 +155,6 @@ export const AuthService = {
         where: { refresh_session: refresh_session },
       });
 
-      console.log("session", session);
-
       if (!session) {
         return {
           status_code: 404,
@@ -219,14 +216,6 @@ export const AuthService = {
           expire_session: expire_session,
           refresh_session: newRefreshSession,
         },
-        user: {
-          id: session.authorId,
-          username: session.username,
-          role: session.role,
-          email: session.email,
-          name: session.name,
-          image: session.image,
-        },
       };
     } catch (error) {
       return {
@@ -239,8 +228,6 @@ export const AuthService = {
 
   async GetSessionById(id) {
     try {
-      console.log("id", id);
-
       const session = await prisma.session.findFirst({
         where: { authorId: id },
       });
@@ -253,11 +240,34 @@ export const AuthService = {
         };
       }
 
+      const user = await prisma.user.findFirst({
+        where: { id_users: session.authorId },
+      });
+      if (!user) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "User not found",
+        };
+      }
+
       return {
         status_code: 200,
         status: true,
         message: "Session found",
-        session: session,
+        session: {
+          id: session.id_session,
+          expire_session: session.expire_session,
+          refresh_session: session.refresh_session,
+        },
+        user: {
+          id: session.authorId,
+          username: session.username,
+          role: session.role,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        },
       };
     } catch (error) {
       return {
