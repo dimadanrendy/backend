@@ -34,7 +34,7 @@ model User {
 }
 
 model Documents {
-  id_videos Int     @id @default(autoincrement())
+  id_documents Int     @id @default(autoincrement())
   nomor     String?
   judul     String
   tipe_dokumen String?
@@ -71,7 +71,7 @@ model Photos {
 }
 
 model Videos {
-  id_photos Int @id @default(autoincrement())
+  id_videos Int @id @default(autoincrement())
   judul     String
   huruf_besar String
   deskripsi String @db.LongText
