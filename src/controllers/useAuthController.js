@@ -32,7 +32,7 @@ export const RefreshSession = async (req, res) => {
 };
 
 export const DeleteAuth = async (req, res) => {
-  const session = await AuthService.LogoutSession(req, res);
+  const session = await AuthService.LogoutSession(req);
 
   if (session.status === false) {
     return res.status(session.status_code).json(session);
@@ -44,8 +44,7 @@ export const DeleteAuth = async (req, res) => {
 };
 
 export const GetAuthById = async (req, res) => {
-  const { id } = req.params;
-  const session = await AuthService.GetSessionById(id);
+  const session = await AuthService.GetSessionById(req);
 
   if (session.status === false) {
     return res.status(session.status_code).json(session);

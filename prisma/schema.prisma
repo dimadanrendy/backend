@@ -50,6 +50,7 @@ model Documents {
   published Boolean @default(false)
   author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
   authorId  String?
+  authorUsername String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -66,6 +67,7 @@ model Photos {
   published Boolean @default(false)
   author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
   authorId  String?
+  authorUsername String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -81,6 +83,7 @@ model Videos {
   published Boolean @default(false)
   author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
   authorId  String?
+  authorUsername String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -1,24 +1,120 @@
+import { AuthService } from "./useAuthService.js";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export const DocumentsService = {
-  async GetDocuments() {
-    const documents = await prisma.documents.findMany();
-    return {
-      status_code: 200,
-      status: true,
-      data: documents,
-    };
+  async GetDocuments(req) {
+    try {
+      const user_id = req.headers["x-session-user"];
+
+      // cek session user
+      const session = await AuthService.GetSessionById(user_id);
+      if (session.status === false) {
+        return session;
+      }
+
+      // cek role user apakah admin jika admin atau super admin tampilkan semua dokumen
+      if (session.user.role === "admin" || session.user.role === "superadmin") {
+        const documents = await prisma.documents.findMany();
+
+        if (!documents) {
+          return {
+            status_code: 404,
+            status: false,
+            message: "Documents not found",
+          };
+        }
+        return {
+          status_code: 200,
+          status: true,
+          data: documents,
+        };
+      }
+
+      // jika role user adalah user tampilkan sesuai authorId yang mereka upload
+      const documents = await prisma.documents.findMany({
+        where: { authorId: session.user.id },
+      });
+
+      if (!documents) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Documents not found",
+        };
+      }
+
+      return {
+        status_code: 200,
+        status: true,
+        data: documents,
+      };
+    } catch (error) {
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+        message_error: error.message,
+      };
+    }
   },
 
-  async GetDocumentsById(id) {
-    const document = await prisma.documents.findUnique({
-      where: {
-        id: id,
-      },
-    });
-    return document;
+  async GetDocumentsById(req) {
+    try {
+      const user_id = req.headers["x-session-user"];
+      const { id } = req.params;
+
+      // cek session user
+      const session = await AuthService.GetSessionById(user_id);
+      if (session.status === false) {
+        return session;
+      }
+      // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
+      if (session.user.role === "admin" || session.user.role === "superadmin") {
+        const documents = await prisma.documents.findUnique({
+          where: { id_documents: parseInt(id) },
+        });
+
+        if (!documents) {
+          return {
+            status_code: 404,
+            status: false,
+            message: "Document not found",
+          };
+        }
+        return {
+          status_code: 200,
+          status: true,
+          data: documents,
+        };
+      }
+
+      // jika role user adalah user tampilkan sesuai authorId yang mereka upload
+      const documents = await prisma.documents.findUnique({
+        where: { id_documents: parseInt(id), authorId: session.user.id },
+      });
+
+      if (!documents) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Document not found",
+        };
+      }
+      return {
+        status_code: 200,
+        status: true,
+        data: documents,
+      };
+    } catch (error) {
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+        message_error: error.message,
+      };
+    }
   },
 
   async PostDocuments(data) {
@@ -61,6 +157,7 @@ export const DocumentsService = {
       const published = true;
       const file = filename;
       const authorId = session.authorId;
+      const authorUsername = session.username;
 
       const documents = await prisma.documents.create({
         data: {
@@ -78,6 +175,7 @@ export const DocumentsService = {
           published: published,
           file: file,
           authorId: authorId,
+          authorUsername: authorUsername,
         },
       });
       return {

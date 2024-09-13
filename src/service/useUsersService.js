@@ -14,11 +14,11 @@ export const UsersService = {
       });
 
       if (existingUser) {
-        return res.status(400).json({
+        return {
           status_code: 400,
           status: false,
           message: "Username already exists",
-        });
+        };
       }
 
       const existingEmail = await prisma.user.findUnique({
@@ -26,11 +26,11 @@ export const UsersService = {
       });
 
       if (existingEmail) {
-        return res.status(400).json({
+        return {
           status_code: 400,
           status: false,
           message: "Email already exists",
-        });
+        };
       }
 
       // Hash password menggunakan bcrypt
@@ -49,14 +49,17 @@ export const UsersService = {
         },
       });
 
-      // Kembalikan pengguna baru yang sudah disimpan
-      return newUser;
+      return {
+        status_code: 201,
+        status: true,
+        message: "User created successfully",
+      };
     } catch (error) {
-      return res.status(500).json({
+      return {
         status_code: 500,
         status: false,
         message: "Internal server error",
-      });
+      };
     }
   },
 
@@ -78,38 +81,55 @@ export const UsersService = {
       });
 
       if (!users) {
-        return res.status(404).json({
+        return {
           status_code: 404,
           status: false,
           message: "Users not found",
-        });
+        };
       }
-      return users;
+      return {
+        status_code: 200,
+        status: true,
+        message: "Success",
+        data: users,
+      };
     } catch (error) {
-      return res.status(500).json({
+      return {
         status_code: 500,
         status: false,
         message: "Internal server error",
-      });
+      };
     }
   },
 
   async getUsersById(id) {
-    return await prisma.user.findUnique({
-      where: { id_users: id },
-      select: {
-        id_users: true,
-        email: true,
-        name: true,
-        username: true,
-        role: true,
-        bidang: true,
+    try {
+      // Cek apakah user ada
+      const user = await prisma.user.findUnique({
+        where: { id_users: id },
+      });
+
+      if (!user) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "User not found",
+        };
+      }
+
+      return {
+        status_code: 200,
         status: true,
-        image: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+        message: "Success",
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+      };
+    }
   },
 
   async deleteUser(id) {
@@ -120,41 +140,88 @@ export const UsersService = {
       });
 
       if (!deletedUser) {
-        throw new Error("User not found");
+        return {
+          status_code: 404,
+          status: false,
+          message: "User not found",
+        };
       }
 
-      return true;
+      return {
+        status_code: 200,
+        status: true,
+        message: "Success delete user",
+      };
     } catch (error) {
-      throw new Error(error.message);
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+      };
     }
   },
 
   async patchUsers(id, req) {
     try {
-      if (req.confirmPassword !== req.password) {
-        throw new Error("Password doesn't match");
+      const { email, name, username, role, bidang, status } = req;
+
+      // Jika cuman mengubah role
+      if (!email && !name && !username && !bidang && !status) {
+        const user = await prisma.user.update({
+          where: {
+            id_users: id,
+          },
+          data: {
+            role: role,
+          },
+        });
+        if (!user) {
+          return {
+            status_code: 404,
+            status: false,
+            message: "User not found",
+          };
+        }
+        return {
+          status_code: 200,
+          status: true,
+          message: "Success update user",
+        };
       }
 
-      delete req.confirmPassword;
-
-      if (req.password) {
-        const hashedPassword = await bcrypt.hash(req.password, 10);
-        req.password = hashedPassword;
-      }
-
+      // Jika mengubah email, name, username, role, bidang, status
       const user = await prisma.user.update({
         where: {
           id_users: id,
         },
-        data: req,
+        data: {
+          email: email,
+          name: name,
+          username: username,
+          role: role,
+          bidang: bidang,
+          status: status,
+        },
       });
 
       if (!user) {
-        throw new Error("User not found");
+        return {
+          status_code: 404,
+          status: false,
+          message: "User not found",
+        };
       }
-      return user;
+      return {
+        status_code: 200,
+        status: true,
+        message: "Success update user",
+      };
     } catch (error) {
-      throw new Error(error.message);
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+      };
     }
   },
 };

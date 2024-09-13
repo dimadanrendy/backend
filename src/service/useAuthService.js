@@ -7,7 +7,7 @@ dotenv.config(); // Load env variables
 const prisma = new PrismaClient();
 
 export const AuthService = {
-  async LoginSession(req, res) {
+  async LoginSession(req) {
     try {
       const { input, password } = req.body;
 
@@ -112,9 +112,18 @@ export const AuthService = {
     }
   },
 
-  async LogoutSession(req, res) {
+  async LogoutSession(req) {
     try {
+      const session_id = req.headers["x-session-user"];
       const { id } = req.params;
+
+      if ((!session_id && !id) || session_id !== id) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
 
       const session = await prisma.session.findFirst({
         where: { authorId: id },
@@ -148,14 +157,22 @@ export const AuthService = {
 
   async RefreshSession(req, res) {
     try {
+      const session_id = req.headers["x-session-user"];
       const { refresh_session } = req.params;
-      console.log(refresh_session);
+
+      if (!session_id && !refresh_session) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
 
       const session = await prisma.session.findFirst({
         where: { refresh_session: refresh_session },
       });
 
-      if (!session) {
+      if (session.authorId !== session_id) {
         return {
           status_code: 404,
           status: false,
@@ -226,17 +243,27 @@ export const AuthService = {
     }
   },
 
-  async GetSessionById(id) {
+  async GetSessionById(req) {
     try {
+      const session_id = req.headers["x-session-user"];
+      const { id } = req.params;
+
+      if ((!session_id && !id) || session_id !== id) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
       const session = await prisma.session.findFirst({
         where: { authorId: id },
       });
 
       if (!session) {
         return {
-          status_code: 404,
+          status_code: 401,
           status: false,
-          message: "Session not found",
+          message: "Unauthorized",
         };
       }
 
