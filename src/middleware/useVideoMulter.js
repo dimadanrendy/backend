@@ -2,7 +2,7 @@ import multer from "multer";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/photos");
+    cb(null, "public/videos");
   },
   filename: (req, file, cb) => {
     const originalname = file.originalname;
@@ -25,11 +25,11 @@ const storage = multer.diskStorage({
   },
 });
 
-const uploadDokumen = multer({
+const uploadVideos = multer({
   storage: storage,
   // limits: {
   //     fileSize: 3 * 1000 * 1000 // 3 MB
   // }
 });
 
-export default uploadDokumen;
+export default uploadVideos;

@@ -31,11 +31,27 @@ export const PostDocuments = async (req, res) => {
 };
 
 export const PatchDocuments = async (req, res) => {
-  res.send("Hello World!");
+  const documents = await DocumentsService.PatchDocuments(req);
+  if (!documents) {
+    return res.status(documents.status_code).json({
+      status_code: documents.status_code,
+      status: documents.status,
+      message: documents.message,
+    });
+  }
+  return res.status(documents.status_code).json(documents);
 };
 
 export const DeleteDocuments = async (req, res) => {
-  res.send("Hello World!");
+  const documents = await DocumentsService.DeleteDocuments(req);
+  if (!documents) {
+    return res.status(documents.status_code).json({
+      status_code: documents.status_code,
+      status: documents.status,
+      message: documents.message,
+    });
+  }
+  return res.status(documents.status_code).json(documents);
 };
 
 export const GetDocumentsById = async (req, res) => {

@@ -7,6 +7,59 @@ dotenv.config(); // Load env variables
 const prisma = new PrismaClient();
 
 export const AuthService = {
+  async GetSessionAuth(id) {
+    try {
+      const session_id = id;
+
+      const session = await prisma.session.findFirst({
+        where: { authorId: session_id },
+      });
+
+      if (!session) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
+
+      const user = await prisma.user.findFirst({
+        where: { id_users: session.authorId },
+      });
+      if (!user) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "User not found",
+        };
+      }
+
+      return {
+        status_code: 200,
+        status: true,
+        message: "Session found",
+        session: {
+          id: session.id_session,
+          expire_session: session.expire_session,
+          refresh_session: session.refresh_session,
+        },
+        user: {
+          id: session.authorId,
+          username: session.username,
+          role: session.role,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        },
+      };
+    } catch (error) {
+      return {
+        status_code: 500,
+        status: false,
+        message: error.message,
+      };
+    }
+  },
   async LoginSession(req) {
     try {
       const { input, password } = req.body;
@@ -28,9 +81,13 @@ export const AuthService = {
       });
 
       if (existingSession) {
+        await prisma.session.delete({
+          where: { authorId: existingSession.authorId },
+        });
         return {
           status_code: 400,
           status: false,
+          reset_cookies: true,
           message: "Session already exists for this user",
         };
       }

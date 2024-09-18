@@ -16,13 +16,8 @@ const PATCH = process.env.BASE_ROUTE;
 // Routes Documents
 router.get("/", GetDocuments);
 router.get("/:id", GetDocumentsById);
-router.post(
-  "/",
-
-  uploadDokumen.single("file"),
-  PostDocuments
-);
-router.patch("/:id", PatchDocuments);
+router.post("/", uploadDokumen.single("file"), PostDocuments);
+router.patch("/:id", uploadDokumen.single("file"), PatchDocuments);
 router.delete("/:id", DeleteDocuments);
 
 export default router;

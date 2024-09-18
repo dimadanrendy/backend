@@ -5,8 +5,8 @@ import path from "path";
 
 const prisma = new PrismaClient();
 
-export const DocumentsService = {
-  async GetDocuments(req) {
+export const VidoesService = {
+  async GetVidoes(req) {
     try {
       const user_id = req.headers["x-session-user"];
 
@@ -18,39 +18,39 @@ export const DocumentsService = {
 
       // cek role user apakah admin jika admin atau super admin tampilkan semua dokumen
       if (session.user.role === "admin" || session.user.role === "superadmin") {
-        const documents = await prisma.documents.findMany();
+        const videos = await prisma.videos.findMany();
 
-        if (!documents) {
+        if (!videos) {
           return {
             status_code: 404,
             status: false,
-            message: "Documents not found",
+            message: "Videos not found",
           };
         }
         return {
           status_code: 200,
           status: true,
-          data: documents,
+          data: videos,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
-      const documents = await prisma.documents.findMany({
+      const videos = await prisma.videos.findMany({
         where: { authorId: session.user.id },
       });
 
-      if (!documents) {
+      if (!videos) {
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "Videos not found",
         };
       }
 
       return {
         status_code: 200,
         status: true,
-        data: documents,
+        data: videos,
       };
     } catch (error) {
       return {
@@ -62,7 +62,7 @@ export const DocumentsService = {
     }
   },
 
-  async GetDocumentsById(req) {
+  async GetVideosById(req) {
     try {
       const user_id = req.headers["x-session-user"];
       const { id } = req.params;
@@ -74,11 +74,11 @@ export const DocumentsService = {
       }
       // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
       if (session.user.role === "admin" || session.user.role === "superadmin") {
-        const documents = await prisma.documents.findUnique({
-          where: { id_documents: parseInt(id) },
+        const videos = await prisma.videos.findUnique({
+          where: { id_videos: parseInt(id) },
         });
 
-        if (!documents) {
+        if (!videos) {
           return {
             status_code: 404,
             status: false,
@@ -88,16 +88,16 @@ export const DocumentsService = {
         return {
           status_code: 200,
           status: true,
-          data: documents,
+          data: videos,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
-      const documents = await prisma.documents.findUnique({
-        where: { id_documents: parseInt(id), authorId: session.user.id },
+      const videos = await prisma.videos.findUnique({
+        where: { id_videos: parseInt(id), authorId: session.user.id },
       });
 
-      if (!documents) {
+      if (!videos) {
         return {
           status_code: 404,
           status: false,
@@ -107,7 +107,7 @@ export const DocumentsService = {
       return {
         status_code: 200,
         status: true,
-        data: documents,
+        data: videos,
       };
     } catch (error) {
       return {
@@ -119,23 +119,11 @@ export const DocumentsService = {
     }
   },
 
-  async PostDocuments(data) {
+  async PostVideos(data) {
     try {
       const user_id = data.headers["x-session-user"];
       const { filename } = data.file;
-      const {
-        nomor,
-        judul,
-        tipe_dokumen,
-        dokumen,
-        bidang,
-        singkatan,
-        tahun,
-        bahasa,
-        tempat_penetapan,
-        sumber,
-        lokasi,
-      } = data.body;
+      const { judul, huruf_besar, deskripsi, bidang, tanggal } = data.body;
 
       if (user_id === undefined || user_id === null) {
         return {
@@ -161,19 +149,13 @@ export const DocumentsService = {
       const authorId = session.authorId;
       const authorUsername = session.username;
 
-      const documents = await prisma.documents.create({
+      const videos = await prisma.videos.create({
         data: {
-          nomor: nomor,
           judul: judul,
-          tipe_dokumen: tipe_dokumen,
-          dokumen: dokumen,
+          huruf_besar: huruf_besar,
+          tanggal: tanggal,
           bidang: bidang,
-          singkatan: singkatan,
-          tahun: tahun,
-          bahasa: bahasa,
-          tempat_penetapan: tempat_penetapan,
-          sumber: sumber,
-          lokasi: lokasi,
+          deskripsi: deskripsi,
           published: published,
           file: file,
           authorId: authorId,
@@ -183,7 +165,7 @@ export const DocumentsService = {
       return {
         status_code: 201,
         status: true,
-        message: "Documents created",
+        message: "Videos created",
       };
     } catch (error) {
       return {
@@ -194,30 +176,18 @@ export const DocumentsService = {
     }
   },
 
-  async PatchDocuments(req) {
+  async PatchVideos(req) {
     try {
       const user_id = req.headers["x-session-user"];
       const { id } = req.params;
       const { filename } = req.file;
-      const {
-        nomor,
-        judul,
-        tipe_dokumen,
-        dokumen,
-        bidang,
-        singkatan,
-        tahun,
-        bahasa,
-        tempat_penetapan,
-        sumber,
-        lokasi,
-        published,
-      } = req.body;
+      const { judul, huruf_besar, deskripsi, bidang, tanggal, published } =
+        req.body;
 
       const file = filename;
 
       const deleteFile = () => {
-        const filePath = path.join(process.cwd(), "public", "documents", file);
+        const filePath = path.join(process.cwd(), "public", "videos", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             console.error(err);
@@ -259,18 +229,18 @@ export const DocumentsService = {
       // jika user suoeradmin atau admin bisa mengubah semua dokumen
       if (session.role === "admin" || session.role === "superadmin") {
         // hapus file sebelumnya dalam storage
-        const cek_documents = await prisma.documents.findFirst({
-          where: { id_documents: parseInt(id) },
+        const cek_videos = await prisma.videos.findFirst({
+          where: { id_videos: parseInt(id) },
         });
 
-        if (cek_documents && cek_documents.file) {
+        if (cek_videos && cek_videos.file) {
           try {
             // Hapus file sebelumnya
             const filePath = path.join(
               process.cwd(),
               "public",
-              "documents",
-              cek_documents.file
+              "videos",
+              cek_videos.file
             );
 
             // Cek apakah file ada sebelum dihapus
@@ -284,37 +254,31 @@ export const DocumentsService = {
           }
         }
 
-        const documents = await prisma.documents.update({
-          where: { id_documents: parseInt(id) },
+        const videos = await prisma.videos.update({
+          where: { id_videos: parseInt(id) },
           data: {
-            nomor: nomor,
             judul: judul,
-            tipe_dokumen: tipe_dokumen,
-            dokumen: dokumen,
-            bidang: bidang,
-            singkatan: singkatan,
-            tahun: tahun,
-            bahasa: bahasa,
-            tempat_penetapan: tempat_penetapan,
-            sumber: sumber,
-            lokasi: lokasi,
+            huruf_besar: huruf_besar,
+            deskripsi: deskripsi,
+            tanggal: tanggal,
             published: published,
+            bidang: bidang,
             file: file,
           },
         });
-        if (!documents) {
+        if (!videos) {
           deleteFile();
           return {
             status_code: 404,
             status: false,
-            message: "Documents not found",
+            message: "Videos not found",
           };
         }
 
         return {
           status_code: 200,
           status: true,
-          message: "Documents updated",
+          message: "Videos updated",
         };
       }
 
@@ -329,12 +293,12 @@ export const DocumentsService = {
       }
 
       // hapus file sebelumnya dalam storage
-      const cek_documents = await prisma.documents.findFirst({
-        where: { id_documents: parseInt(id) }, // pastikan 'id' sudah diambil dari request atau sumber lain
+      const cek_videos = await prisma.videos.findFirst({
+        where: { id_videos: parseInt(id) }, // pastikan 'id' sudah diambil dari request atau sumber lain
       });
 
       // jika document authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (cek_documents && cek_documents.authorId !== user_id) {
+      if (cek_videos && cek_videos.authorId !== user_id) {
         deleteFile();
         return {
           status_code: 403,
@@ -343,23 +307,23 @@ export const DocumentsService = {
         };
       }
 
-      if (!cek_documents) {
+      if (!cek_videos) {
         deleteFile();
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "Videos not found",
         };
       }
 
-      if (cek_documents && cek_documents.file) {
+      if (cek_videos && cek_videos.file) {
         try {
           // Hapus file sebelumnya
           const filePath = path.join(
             process.cwd(),
             "public",
-            "documents",
-            cek_documents.file
+            "videos",
+            cek_videos.file
           );
 
           // Cek apakah file ada sebelum dihapus
@@ -373,37 +337,31 @@ export const DocumentsService = {
         }
       }
 
-      const documents = await prisma.documents.update({
-        where: { id_documents: parseInt(id) },
+      const videos = await prisma.videos.update({
+        where: { id_videos: parseInt(id) },
         data: {
-          nomor: nomor,
           judul: judul,
-          tipe_dokumen: tipe_dokumen,
-          dokumen: dokumen,
-          bidang: bidang,
-          singkatan: singkatan,
-          tahun: tahun,
-          bahasa: bahasa,
-          tempat_penetapan: tempat_penetapan,
-          sumber: sumber,
-          lokasi: lokasi,
+          huruf_besar: huruf_besar,
+          deskripsi: deskripsi,
+          tanggal: tanggal,
           published: published,
+          bidang: bidang,
           file: file,
         },
       });
-      if (!documents) {
+      if (!videos) {
         deleteFile();
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "Videos not found",
         };
       }
 
       return {
         status_code: 200,
         status: true,
-        message: "Documents updated",
+        message: "Videos updated",
       };
     } catch (error) {
       return {
@@ -414,7 +372,7 @@ export const DocumentsService = {
     }
   },
 
-  async DeleteDocuments(req) {
+  async DeleteVideos(req) {
     try {
       const user_id = req.headers["x-session-user"];
       const { id } = req.params;
@@ -430,34 +388,34 @@ export const DocumentsService = {
         };
       }
 
-      // cek documents authorId
-      const cek_documents = await prisma.documents.findFirst({
-        where: { id_documents: parseInt(id) },
+      // cek videos authorId
+      const cek_videos = await prisma.videos.findFirst({
+        where: { id_videos: parseInt(id) },
       });
 
-      if (!cek_documents) {
+      if (!cek_videos) {
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "Videos not found",
         };
       }
-      const file = cek_documents?.file;
+      const file = cek_videos?.file;
 
       // jika role admin atau superadmin
       if (session.role === "admin" || session.role === "superadmin") {
-        const documents = await prisma.documents.delete({
-          where: { id_documents: parseInt(id) },
+        const videos = await prisma.videos.delete({
+          where: { id_videos: parseInt(id) },
         });
-        if (!documents) {
+        if (!videos) {
           return {
             status_code: 404,
             status: false,
-            message: "Documents not found",
+            message: "videos not found",
           };
         }
 
-        const filePath = path.join(process.cwd(), "public", "documents", file);
+        const filePath = path.join(process.cwd(), "public", "videos", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             return {
@@ -470,12 +428,12 @@ export const DocumentsService = {
         return {
           status_code: 200,
           status: true,
-          message: "Documents deleted",
+          message: "videos deleted",
         };
       }
 
-      // jika documents authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (cek_documents && cek_documents.authorId !== user_id) {
+      // jika videos authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
+      if (cek_videos && cek_videos.authorId !== user_id) {
         return {
           status_code: 403,
           status: false,
@@ -483,11 +441,11 @@ export const DocumentsService = {
         };
       }
 
-      await prisma.documents.delete({
-        where: { id_documents: parseInt(id) },
+      await prisma.videos.delete({
+        where: { id_videos: parseInt(id) },
       });
 
-      const filePath = path.join(process.cwd(), "public", "documents", file);
+      const filePath = path.join(process.cwd(), "public", "videos", file);
       fs.unlink(filePath, (err) => {
         if (err) {
           return {
@@ -501,7 +459,7 @@ export const DocumentsService = {
       return {
         status_code: 200,
         status: true,
-        message: "Documents deleted",
+        message: "Videos deleted",
       };
     } catch (error) {
       return {

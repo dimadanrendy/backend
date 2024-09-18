@@ -178,23 +178,45 @@ export const validatePhotos = [
 ];
 
 export const validateVideos = [
+  body("nomor").trim().escape().notEmpty().withMessage("Nomor is required"),
+
   body("judul").trim().escape().notEmpty().withMessage("Judul is required"),
 
-  body("huruf_besar")
+  body("tipe_dokumen")
     .trim()
     .escape()
     .notEmpty()
-    .withMessage("Huruf besar is required"),
+    .withMessage("Tipe dokumen is required"),
 
-  body("deskripsi")
-    .trim()
-    .escape()
-    .notEmpty()
-    .withMessage("Deskripsi is required"),
+  body("dokumen").trim().escape().notEmpty().withMessage("Dokumen is required"),
 
   body("bidang").trim().escape().notEmpty().withMessage("Bidang is required"),
 
-  body("tanggal").trim().escape().notEmpty().withMessage("Tanggal is required"),
+  body("singkatan")
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage("Singkatan is required"),
+
+  body("tahun").trim().escape().notEmpty().withMessage("Tahun is required"),
+
+  body("bahasa").trim().escape().notEmpty().withMessage("Bahasa is required"),
+
+  body("tempat_penetapan")
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage("Tempat penetapan is required"),
+
+  body("sumber").trim().escape().notEmpty().withMessage("Sumber is required"),
+
+  body("lokasi").trim().escape().notEmpty().withMessage("lokasi is required"),
+
+  body("published")
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage("Published is required"),
 
   body("file").custom((value, { req }) => {
     if (!req.file) {
@@ -203,7 +225,7 @@ export const validateVideos = [
     return true;
   }),
 
-  // Cek 🙂 validasi dan kirim error jika ad  a
+  // Cek hasil validasi dan kirim error jika ada
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

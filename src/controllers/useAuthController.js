@@ -8,6 +8,9 @@ export const PostAuth = async (req, res) => {
 
   // Jika login gagal, kirim respons dengan pesan error
   if (session.status === false) {
+    if (session.reset_cookies === true) {
+      res.clearCookie("session_id");
+    }
     return res.status(session.status_code).json(session);
   }
 

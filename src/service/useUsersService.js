@@ -65,6 +65,8 @@ export const UsersService = {
 
   async getUsers(req, res) {
     try {
+      console.log("masuk");
+
       const users = await prisma.user.findMany({
         select: {
           id_users: true,

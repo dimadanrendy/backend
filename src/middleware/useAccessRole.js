@@ -11,13 +11,13 @@ export const useAccessRole = async (req, res, next) => {
     });
   }
 
-  const session = await AuthService.GetSessionById(session_user);
+  const session = await AuthService.GetSessionAuth(session_user);
 
   if (session.status === false) {
     return res.status(session.status_code).json(session);
   }
 
-  if (session.user.role !== "admin" && session.user.role !== "superadmin") {
+  if (session.data?.role !== "admin" && session.data?.role !== "superadmin") {
     return res.status(403).json({
       status_code: 403,
       status: false,
