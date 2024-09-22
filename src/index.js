@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 
 // Routing
 import useDocumentsRoute from "./routes/useDocumentsRoute.js";
@@ -15,10 +16,19 @@ import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
 
 dotenv.config();
 
+// Limit request
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
 // Init
 const app = express();
 const PORT = process.env.PORT || 5000;
 const PATCH = process.env.BASE_ROUTE;
+
+// Middleware limiter
+app.use(limiter);
 
 // Middleware cors
 app.use(

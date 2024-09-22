@@ -9,7 +9,6 @@ import {
 
 import { validateDocuments } from "../middleware/useValidator.js";
 import uploadDokumen from "../middleware/useDicumentsMulter.js";
-import { useAccessToken } from "../middleware/useAccessToken.js";
 import { useAccessRole } from "../middleware/useAccessRole.js";
 
 const router = express.Router();
