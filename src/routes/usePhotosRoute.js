@@ -8,15 +8,15 @@ import {
 } from "../controllers/usePhotosController.js";
 
 import uploadFoto from "../middleware/useFotoMulter.js";
-import { useAccessToken } from "../middleware/useAccessToken.js";
+import { useAccessRole } from "../middleware/useAccessRole.js";
 
 const router = express.Router();
 
 // Routes Photos
-router.get("/", useAccessToken, GetPhotos);
-router.get("/:id", useAccessToken, GetPhotosById);
-router.post("/", useAccessToken, uploadFoto.single("file"), PostPhotos);
-router.patch("/:id", useAccessToken, uploadFoto.single("file"), PatchPhotos);
-router.delete("/:id", useAccessToken, DeletePhotos);
+router.get("/", useAccessRole, GetPhotos);
+router.get("/:id", useAccessRole, GetPhotosById);
+router.post("/", useAccessRole, uploadFoto.single("file"), PostPhotos);
+router.patch("/:id", useAccessRole, uploadFoto.single("file"), PatchPhotos);
+router.delete("/:id", useAccessRole, DeletePhotos);
 
 export default router;

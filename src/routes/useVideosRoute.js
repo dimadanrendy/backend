@@ -7,15 +7,15 @@ import {
   GetVideosById,
 } from "../controllers/useVideosController.js";
 import uploadVideos from "../middleware/useVideoMulter.js";
-import { useAccessToken } from "../middleware/useAccessToken.js";
+import { useAccessRole } from "../middleware/useAccessRole.js";
 
 const router = express.Router();
 
 // Routes Videos
-router.get("/", useAccessToken, GetVideos);
-router.get("/:id", useAccessToken, GetVideosById);
-router.post("/", useAccessToken, uploadVideos.single("file"), PostVideos);
-router.patch("/:id", useAccessToken, uploadVideos.single("file"), PatchVideos);
-router.delete("/:id", useAccessToken, DeleteVideos);
+router.get("/", useAccessRole, GetVideos);
+router.get("/:id", useAccessRole, GetVideosById);
+router.post("/", useAccessRole, uploadVideos.single("file"), PostVideos);
+router.patch("/:id", useAccessRole, uploadVideos.single("file"), PatchVideos);
+router.delete("/:id", useAccessRole, DeleteVideos);
 
 export default router;

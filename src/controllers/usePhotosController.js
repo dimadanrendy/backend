@@ -18,6 +18,7 @@ export const GetPhotos = async (req, res) => {
 };
 
 export const PostPhotos = async (req, res) => {
+  console.log(req.file);
   const photos = await PhotosService.PostPhotos(req);
   if (!photos) {
     return res.status(photos.status_code).json({

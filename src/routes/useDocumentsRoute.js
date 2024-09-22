@@ -10,20 +10,21 @@ import {
 import { validateDocuments } from "../middleware/useValidator.js";
 import uploadDokumen from "../middleware/useDicumentsMulter.js";
 import { useAccessToken } from "../middleware/useAccessToken.js";
+import { useAccessRole } from "../middleware/useAccessRole.js";
 
 const router = express.Router();
 const PATCH = process.env.BASE_ROUTE;
 
 // Routes Documents
-router.get("/", useAccessToken, GetDocuments);
-router.get("/:id", useAccessToken, GetDocumentsById);
-router.post("/", useAccessToken, uploadDokumen.single("file"), PostDocuments);
+router.get("/", useAccessRole, GetDocuments);
+router.get("/:id", useAccessRole, GetDocumentsById);
+router.post("/", useAccessRole, uploadDokumen.single("file"), PostDocuments);
 router.patch(
   "/:id",
-  useAccessToken,
+  useAccessRole,
   uploadDokumen.single("file"),
   PatchDocuments
 );
-router.delete("/:id", useAccessToken, DeleteDocuments);
+router.delete("/:id", useAccessRole, DeleteDocuments);
 
 export default router;
