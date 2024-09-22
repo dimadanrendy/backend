@@ -27,6 +27,14 @@ export const useAccessRole = async (req, res, next) => {
     req.user = decoded;
   });
 
+  if (!req.user) {
+    return res.status(401).json({
+      status_code: 401,
+      status: false,
+      message: "Unauthorized",
+    });
+  }
+
   if (req.user.role !== "admin" && req.user.role !== "superadmin") {
     return res.status(403).json({
       status_code: 403,

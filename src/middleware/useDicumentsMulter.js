@@ -15,6 +15,8 @@ const fileFilter = (req, file, cb) => {
   const allowedMimeTypes = [
     "application/pdf",
     "application/zip",
+    "application/vnd.rar",
+    "application/x-zip-compressed",
     "application/x-rar-compressed",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
