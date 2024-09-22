@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid"; // Untuk membuat refresh_session unik
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+
 dotenv.config(); // Load env variables
 
 const prisma = new PrismaClient();
@@ -60,8 +62,10 @@ export const AuthService = {
       };
     }
   },
-  async LoginSession(req) {
+  async LoginSession(req, res) {
     try {
+      const jwtSecret = process.env.JWT_SECRET_KEY;
+      const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
       const { input, password } = req.body;
 
       // Validasi input jika tidak ada
@@ -73,6 +77,7 @@ export const AuthService = {
         };
       }
 
+      // format email
       const isEmail = /\S+@\S+\.\S+/.test(input);
 
       // Cek apakah session sudah ada
@@ -80,6 +85,7 @@ export const AuthService = {
         where: isEmail ? { email: input } : { username: input },
       });
 
+      // Cek apakah session sudah ada
       if (existingSession) {
         await prisma.session.delete({
           where: { authorId: existingSession.authorId },
@@ -97,6 +103,7 @@ export const AuthService = {
         where: isEmail ? { email: input } : { username: input },
       });
 
+      // Cek apakah user ada
       if (!user) {
         return {
           status_code: 404,
@@ -125,8 +132,34 @@ export const AuthService = {
       }
 
       // Tentukan expire_session dan refresh_session
-      const expire_session = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days from now
-      const refresh_session = uuidv4(); // Menggunakan UUID untuk random string refresh_session
+      const expire_session = new Date(Date.now() + 1000 * 60 * 60 * 24 * 1); // 1 days from now
+
+      // jwt payload
+      const payload = {
+        id: user.id_users,
+        role: user.role,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+      };
+
+      // Buat jwt access token
+      const access_token = jwt.sign(payload, jwtSecret, {
+        expiresIn: "15m",
+      });
+
+      // Buat jwt refresh token
+      const refresh_token = jwt.sign(payload, jwtRefreshSecret, {
+        expiresIn: "1h",
+      });
+
+      // Set cookie
+      res.cookie("session_id", refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
 
       // Buat session di database
       const session = await prisma.session.create({
@@ -136,7 +169,7 @@ export const AuthService = {
           username: user.username,
           email: user.email,
           expire_session: expire_session,
-          refresh_session: refresh_session,
+          refresh_session: refresh_token,
           status_login: true,
         },
       });
@@ -146,11 +179,6 @@ export const AuthService = {
         status_code: 200,
         status: true,
         message: "Login successful",
-        session: {
-          id: session.id_session,
-          expire_session: expire_session,
-          refresh_session: refresh_session,
-        },
         user: {
           id: user.id_users,
           username: user.username,
@@ -159,6 +187,7 @@ export const AuthService = {
           name: user.name,
           image: user.image,
         },
+        access_token: access_token,
       };
     } catch (error) {
       return {
@@ -171,7 +200,7 @@ export const AuthService = {
 
   async LogoutSession(req) {
     try {
-      const session_id = req.headers["x-session-user"];
+      const { id: session_id } = req.user;
       const { id } = req.params;
 
       if ((!session_id && !id) || session_id !== id) {
@@ -214,10 +243,23 @@ export const AuthService = {
 
   async RefreshSession(req, res) {
     try {
-      const session_id = req.headers["x-session-user"];
-      const { refresh_session } = req.params;
+      const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
+      const { session_id } = req.cookies;
+      const jwtSecret = process.env.JWT_SECRET_KEY;
+      const { userId } = req.params;
 
-      if (!session_id && !refresh_session) {
+      // Cek apakah session_id valid
+      const session = await prisma.session.findFirst({
+        where: { refresh_session: session_id },
+      });
+      if (!session) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
+      if (session.authorId !== userId) {
         return {
           status_code: 401,
           status: false,
@@ -225,73 +267,73 @@ export const AuthService = {
         };
       }
 
-      const session = await prisma.session.findFirst({
-        where: { refresh_session: refresh_session },
+      // Verifikasi refresh token menggunakan session_id
+      jwt.verify(session_id, jwtRefreshSecret, (err, decoded) => {
+        if (err) {
+          return {
+            status_code: 403,
+            status: false,
+            message: "Invalid refresh token",
+          };
+        }
+        req.payloadUser = decoded;
       });
 
-      if (session.authorId !== session_id) {
+      if (!req.payloadUser) {
         return {
-          status_code: 404,
+          status_code: 401,
           status: false,
-          message: "Session not found",
+          message: "Unauthorized",
         };
       }
 
-      const user = await prisma.user.findFirst({
-        where: { id_users: session.authorId },
-      });
-      if (!user) {
-        return {
-          status_code: 404,
-          status: false,
-          message: "User not found",
-        };
-      }
+      const { id, role, username, email, name, image } = req.payloadUser;
 
-      // cek jika session sudah expired
-      if (session.expire_session < Date.now()) {
-        // hapus cookie
-        res.clearCookie("session_id");
-        return {
-          status_code: 400,
-          status: false,
-          message: "Session expired",
-        };
-      }
+      const newToken = jwt.sign(
+        { id, role, username, email, name, image },
+        jwtSecret,
+        {
+          expiresIn: "15m",
+        }
+      );
 
-      const newRefreshSession = uuidv4();
+      const newRefreshToken = jwt.sign(
+        { id, role, username, email, name, image },
+        jwtRefreshSecret,
+        {
+          expiresIn: "1h",
+        }
+      );
 
-      const expire_session = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+      const expire_session = new Date(Date.now() + 1000 * 60 * 60 * 24 * 1);
 
-      const newSession = await prisma.session.update({
+      // Update session
+      await prisma.session.update({
         where: { id_session: session.id_session },
         data: {
-          expire_session: expire_session, // 7 days from now
-          refresh_session: newRefreshSession,
+          expire_session: expire_session, // 1 hari dari sekarang
+          refresh_session: newRefreshToken,
         },
       });
 
-      // hapus cookie
+      // Hapus cookie lama
       res.clearCookie("session_id");
 
-      res.cookie("session_id", newSession.id_session, {
+      // Set cookie baru dengan token yang baru
+      res.cookie("session_id", newRefreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: expire_session,
-        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24 * 1, // 1 hari dalam milidetik
       });
 
       return {
         status_code: 200,
         status: true,
         message: "Session refreshed",
-        session: {
-          id: session.id_session,
-          expire_session: expire_session,
-          refresh_session: newRefreshSession,
-        },
+        access_token: newToken,
       };
     } catch (error) {
+      console.log(error);
       return {
         status_code: 500,
         status: false,
@@ -302,7 +344,7 @@ export const AuthService = {
 
   async GetSessionById(req) {
     try {
-      const session_id = req.headers["x-session-user"];
+      const { id: session_id } = req.user;
       const { id } = req.params;
 
       if ((!session_id && !id) || session_id !== id) {
@@ -339,11 +381,6 @@ export const AuthService = {
         status_code: 200,
         status: true,
         message: "Session found",
-        session: {
-          id: session.id_session,
-          expire_session: session.expire_session,
-          refresh_session: session.refresh_session,
-        },
         user: {
           id: session.authorId,
           username: session.username,

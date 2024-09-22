@@ -95,7 +95,7 @@ model Session {
   role               String 
   username           String
   email              String
-  refresh_session    String?
+  refresh_session    String? @db.Text
   status_login       Boolean @default(false)
   author    User @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
   authorId  String @unique

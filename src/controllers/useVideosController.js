@@ -1,8 +1,8 @@
-import { VidoesService } from "../service/useVideosService.js";
+import { VideosService } from "../service/useVideosService.js";
 
 export const GetVideos = async (req, res) => {
   try {
-    const videos = await VidoesService.GetVidoes(req);
+    const videos = await VideosService.GetVideos(req);
     if (videos.status === false) {
       return res.status(videos.status_code).json(videos);
     }
@@ -18,7 +18,7 @@ export const GetVideos = async (req, res) => {
 };
 
 export const PostVideos = async (req, res) => {
-  const videos = await VidoesService.PostVideos(req);
+  const videos = await VideosService.PostVideos(req);
   if (!videos) {
     return res.status(videos.status_code).json({
       status_code: videos.status_code,
@@ -31,7 +31,7 @@ export const PostVideos = async (req, res) => {
 };
 
 export const PatchVideos = async (req, res) => {
-  const videos = await VidoesService.PatchVideos(req);
+  const videos = await VideosService.PatchVideos(req);
 
   if (!videos) {
     return res.status(videos.status_code).json({
@@ -44,7 +44,7 @@ export const PatchVideos = async (req, res) => {
 };
 
 export const DeleteVideos = async (req, res) => {
-  const videos = await VidoesService.DeleteVideos(req);
+  const videos = await VideosService.DeleteVideos(req);
   if (!videos) {
     return res.status(videos.status_code).json({
       status_code: videos.status_code,
@@ -57,7 +57,7 @@ export const DeleteVideos = async (req, res) => {
 
 export const GetVideosById = async (req, res) => {
   try {
-    const videos = await VidoesService.GetVideosById(req);
+    const videos = await VideosService.GetVideosById(req);
     if (videos.status === false) {
       return res.status(videos.status_code).json(videos);
     }

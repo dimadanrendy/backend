@@ -44,6 +44,14 @@ app.use((req, res, next) => {
   res.status(404).send("Halaman tidak ditemukan");
 });
 
+app.use((err, req, res, next) => {
+  res.status(400).json({
+    status_code: 400,
+    status: false,
+    message_error: err.message,
+  });
+});
+
 // Listen
 app.listen(PORT, () => {
   console.log(`Server sedang berjalan at ${PORT}`);

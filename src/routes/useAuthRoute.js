@@ -6,15 +6,16 @@ import {
   GetAuthById,
   RefreshSession,
 } from "../controllers/useAuthController.js";
+import { useAccessToken } from "../middleware/useAccessToken.js";
 // import { validateAuth } from "../middleware/useValidator.js";
 
 const router = express.Router();
 
 // Routes Auth
-router.get("/", GetAuth);
-router.get("/:id", GetAuthById);
+router.get("/", useAccessToken, GetAuth);
+router.get("/:id", useAccessToken, GetAuthById);
 router.post("/", PostAuth);
-router.patch("/:refresh_session", RefreshSession);
-router.delete("/:id", DeleteAuth);
+router.patch("/:userId", RefreshSession);
+router.delete("/:id", useAccessToken, DeleteAuth);
 
 export default router;

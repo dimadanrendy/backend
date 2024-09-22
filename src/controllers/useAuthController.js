@@ -4,7 +4,7 @@ export const GetAuth = async (req, res) => {};
 
 export const PostAuth = async (req, res) => {
   // Panggil fungsi LoginSession dari AuthService dan serahkan req dan res
-  const session = await AuthService.LoginSession(req);
+  const session = await AuthService.LoginSession(req, res);
 
   // Jika login gagal, kirim respons dengan pesan error
   if (session.status === false) {
@@ -13,13 +13,6 @@ export const PostAuth = async (req, res) => {
     }
     return res.status(session.status_code).json(session);
   }
-
-  res.cookie("session_id", session.user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: session.session.expire_session,
-  });
 
   // Jika login berhasil, kirim respons dengan session detail
   return res.status(session.status_code).json(session);

@@ -3,12 +3,14 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const useAccessRole = async (req, res, next) => {
+export const useAccessToken = async (req, res, next) => {
   const jwtSecret = process.env.JWT_SECRET_KEY;
+
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
+  const { session_id } = req.cookies;
 
-  if (!token) {
+  if (!token && !session_id) {
     return res.status(401).json({
       status_code: 401,
       status: false,
@@ -16,23 +18,22 @@ export const useAccessRole = async (req, res, next) => {
     });
   }
 
-  jwt.verify(token, jwtSecret, (err, decoded) => {
-    if (err) {
+  const access_token = token || session_id;
+  try {
+    const decoded = await jwt.verify(access_token, jwtSecret);
+
+    if (!decoded) {
       return res.status(401).json({
         status_code: 401,
         status: false,
         message: "Unauthorized",
       });
     }
-    req.user = decoded;
-  });
 
-  if (req.user.role !== "admin" && req.user.role !== "superadmin") {
-    return res.status(403).json({
-      status_code: 403,
-      status: false,
-      message: "Access denied",
-    });
+    req.user = decoded;
+  } catch (error) {
+    return res.status(401).send("Unauthorized");
   }
+
   next();
 };

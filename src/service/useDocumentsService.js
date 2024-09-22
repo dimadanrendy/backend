@@ -8,16 +8,10 @@ const prisma = new PrismaClient();
 export const DocumentsService = {
   async GetDocuments(req) {
     try {
-      const user_id = req.headers["x-session-user"];
-
-      // cek session user
-      const session = await AuthService.GetSessionAuth(user_id);
-      if (session.status === false) {
-        return session;
-      }
+      const { id, role, username, email } = req.user;
 
       // cek role user apakah admin jika admin atau super admin tampilkan semua dokumen
-      if (session.user.role === "admin" || session.user.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const documents = await prisma.documents.findMany();
 
         if (!documents) {
@@ -36,7 +30,7 @@ export const DocumentsService = {
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
       const documents = await prisma.documents.findMany({
-        where: { authorId: session.user.id },
+        where: { authorId: id },
       });
 
       if (!documents) {
@@ -64,16 +58,11 @@ export const DocumentsService = {
 
   async GetDocumentsById(req) {
     try {
-      const user_id = req.headers["x-session-user"];
+      const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
 
-      // cek session user
-      const session = await AuthService.GetSessionAuth(user_id);
-      if (session.status === false) {
-        return session;
-      }
       // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
-      if (session.user.role === "admin" || session.user.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const documents = await prisma.documents.findUnique({
           where: { id_documents: parseInt(id) },
         });
@@ -94,7 +83,7 @@ export const DocumentsService = {
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
       const documents = await prisma.documents.findUnique({
-        where: { id_documents: parseInt(id), authorId: session.user.id },
+        where: { id_documents: parseInt(id), authorId: user_id },
       });
 
       if (!documents) {
@@ -121,7 +110,7 @@ export const DocumentsService = {
 
   async PostDocuments(data) {
     try {
-      const user_id = data.headers["x-session-user"];
+      const { id: user_id, role, username, email } = data.user;
       const { filename } = data.file;
       const {
         nomor,
@@ -196,7 +185,7 @@ export const DocumentsService = {
 
   async PatchDocuments(req) {
     try {
-      const user_id = req.headers["x-session-user"];
+      const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
       const { filename } = req.file;
       const {
@@ -416,7 +405,7 @@ export const DocumentsService = {
 
   async DeleteDocuments(req) {
     try {
-      const user_id = req.headers["x-session-user"];
+      const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
       const session = await prisma.session.findFirst({
         where: { authorId: user_id },
