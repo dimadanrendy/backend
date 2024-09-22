@@ -187,7 +187,7 @@ export const VideosService = {
       const file = filename;
 
       const deleteFile = () => {
-        const filePath = path.join(process.cwd(), "public", "videos", file);
+        const filePath = path.join(process.cwd(), "uploads", "videos", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             console.error(err);
@@ -238,7 +238,7 @@ export const VideosService = {
             // Hapus file sebelumnya
             const filePath = path.join(
               process.cwd(),
-              "public",
+              "uploads",
               "videos",
               cek_videos.file
             );
@@ -321,7 +321,7 @@ export const VideosService = {
           // Hapus file sebelumnya
           const filePath = path.join(
             process.cwd(),
-            "public",
+            "uploads",
             "videos",
             cek_videos.file
           );
@@ -415,7 +415,7 @@ export const VideosService = {
           };
         }
 
-        const filePath = path.join(process.cwd(), "public", "videos", file);
+        const filePath = path.join(process.cwd(), "uploads", "videos", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             return {
@@ -445,7 +445,7 @@ export const VideosService = {
         where: { id_videos: parseInt(id) },
       });
 
-      const filePath = path.join(process.cwd(), "public", "videos", file);
+      const filePath = path.join(process.cwd(), "uploads", "videos", file);
       fs.unlink(filePath, (err) => {
         if (err) {
           return {

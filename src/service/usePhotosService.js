@@ -189,7 +189,7 @@ export const PhotosService = {
       const file = filename;
 
       const deleteFile = () => {
-        const filePath = path.join(process.cwd(), "public", "photos", file);
+        const filePath = path.join(process.cwd(), "uploads", "photos", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             console.error(err);
@@ -240,7 +240,7 @@ export const PhotosService = {
             // Hapus file sebelumnya
             const filePath = path.join(
               process.cwd(),
-              "public",
+              "uploads",
               "photos",
               cek_photos.file
             );
@@ -323,7 +323,7 @@ export const PhotosService = {
           // Hapus file sebelumnya
           const filePath = path.join(
             process.cwd(),
-            "public",
+            "uploads",
             "photos",
             cek_photos.file
           );
@@ -417,7 +417,7 @@ export const PhotosService = {
           };
         }
 
-        const filePath = path.join(process.cwd(), "public", "photos", file);
+        const filePath = path.join(process.cwd(), "uploads", "photos", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             return {
@@ -447,7 +447,7 @@ export const PhotosService = {
         where: { id_photos: parseInt(id) },
       });
 
-      const filePath = path.join(process.cwd(), "public", "photos", file);
+      const filePath = path.join(process.cwd(), "uploads", "photos", file);
       fs.unlink(filePath, (err) => {
         if (err) {
           return {

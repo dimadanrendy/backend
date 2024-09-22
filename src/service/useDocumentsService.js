@@ -206,7 +206,7 @@ export const DocumentsService = {
       const file = filename;
 
       const deleteFile = () => {
-        const filePath = path.join(process.cwd(), "public", "documents", file);
+        const filePath = path.join(process.cwd(), "uploads", "documents", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             console.error(err);
@@ -257,7 +257,7 @@ export const DocumentsService = {
             // Hapus file sebelumnya
             const filePath = path.join(
               process.cwd(),
-              "public",
+              "uploads",
               "documents",
               cek_documents.file
             );
@@ -346,7 +346,7 @@ export const DocumentsService = {
           // Hapus file sebelumnya
           const filePath = path.join(
             process.cwd(),
-            "public",
+            "uploads",
             "documents",
             cek_documents.file
           );
@@ -446,7 +446,7 @@ export const DocumentsService = {
           };
         }
 
-        const filePath = path.join(process.cwd(), "public", "documents", file);
+        const filePath = path.join(process.cwd(), "uploads", "documents", file);
         fs.unlink(filePath, (err) => {
           if (err) {
             return {
@@ -476,7 +476,7 @@ export const DocumentsService = {
         where: { id_documents: parseInt(id) },
       });
 
-      const filePath = path.join(process.cwd(), "public", "documents", file);
+      const filePath = path.join(process.cwd(), "uploads", "documents", file);
       fs.unlink(filePath, (err) => {
         if (err) {
           return {
