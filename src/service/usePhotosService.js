@@ -125,8 +125,6 @@ export const PhotosService = {
       const { filename } = data.file;
       const { judul, huruf_besar, deskripsi, bidang, tanggal } = data.body;
 
-      console.log(filename);
-
       if (user_id === undefined || user_id === null) {
         return {
           status_code: 401,

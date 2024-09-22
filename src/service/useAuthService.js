@@ -333,7 +333,6 @@ export const AuthService = {
         access_token: newToken,
       };
     } catch (error) {
-      console.log(error);
       return {
         status_code: 500,
         status: false,

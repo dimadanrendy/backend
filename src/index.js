@@ -3,6 +3,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import pino from "pino";
+import pinoHttp from "pino-http";
+import fs from "fs";
+import path from "path";
 
 // Routing
 import useDocumentsRoute from "./routes/useDocumentsRoute.js";
@@ -15,12 +19,13 @@ import useHandleFileRoute from "./routes/useHandleFileRoute.js";
 // Middleware
 import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
 
+// Load env variables
 dotenv.config();
 
 // Limit request
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 100, // limit each IP to 100 requests per windowMs
 });
 
 // Init
@@ -39,7 +44,29 @@ app.use(
   })
 );
 app.use(express.json());
-// app.use(tokenAccessServer);
+app.use(tokenAccessServer);
+
+// Logger
+
+// Buat folder logs jika belum ada
+const logDir = path.join(process.cwd(), "logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+// Buat stream untuk logging ke file
+const stream = fs.createWriteStream(path.join(logDir, "app.log"), {
+  flags: "a",
+});
+
+// Buat logger
+const logger = pino({ level: "info", redact: ["res.headers"] }, stream);
+const httpLogger = pinoHttp({ logger }); // Logger untuk HTTP
+
+// Gunakan pino-http sebagai middleware
+app.use(httpLogger);
+
+// end Logger
 
 // Middleware cookie parser
 app.use(cookieParser());
