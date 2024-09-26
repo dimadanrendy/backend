@@ -59,10 +59,11 @@ model Documents {
 model Photos {
   id_photos Int @id @default(autoincrement())
   judul     String
-  huruf_besar String
+  for       String
   deskripsi String @db.LongText
   bidang    String
   tanggal   String
+
   file      String
   published Boolean @default(false)
   author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
@@ -75,7 +76,7 @@ model Photos {
 model Videos {
   id_videos Int @id @default(autoincrement())
   judul     String
-  huruf_besar String
+  for       String
   deskripsi String @db.LongText
   bidang    String
   tanggal   String
