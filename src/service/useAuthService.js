@@ -39,9 +39,22 @@ export const AuthService = {
     try {
       const session_id = id;
 
-      const session = await prisma.session.findFirst({
-        where: { authorId: session_id },
-      });
+      // const session = await prisma.session.findFirst({
+      //   where: { authorId: session_id },
+      // });
+
+      // Cek session_id dan user_id null
+      if (!session_id) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
+
+      // Cek session di redis
+      const data = await redisClient.get(session_id);
+      const session = JSON.parse(data);
 
       if (!session) {
         return {
@@ -66,11 +79,6 @@ export const AuthService = {
         status_code: 200,
         status: true,
         message: "Session found",
-        session: {
-          id: session.id_session,
-          expire_session: session.expire_session,
-          refresh_session: session.refresh_session,
-        },
         user: {
           id: session.authorId,
           username: session.username,
