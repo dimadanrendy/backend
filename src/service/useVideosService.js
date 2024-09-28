@@ -123,7 +123,7 @@ export const VideosService = {
     try {
       const { id: user_id, role, username, email } = data.user;
       const { filename } = data.file;
-      const { judul, huruf_besar, deskripsi, bidang, tanggal } = data.body;
+      const { judul, untuk, deskripsi, bidang, tanggal } = data.body;
 
       if (user_id === undefined || user_id === null) {
         return {
@@ -152,7 +152,7 @@ export const VideosService = {
       const videos = await prisma.videos.create({
         data: {
           judul: judul,
-          huruf_besar: huruf_besar,
+          untuk: untuk,
           tanggal: tanggal,
           bidang: bidang,
           deskripsi: deskripsi,
@@ -181,8 +181,7 @@ export const VideosService = {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
       const { filename } = req.file;
-      const { judul, huruf_besar, deskripsi, bidang, tanggal, published } =
-        req.body;
+      const { judul, untuk, deskripsi, bidang, tanggal, published } = req.body;
 
       const file = filename;
 
@@ -258,7 +257,7 @@ export const VideosService = {
           where: { id_videos: parseInt(id) },
           data: {
             judul: judul,
-            huruf_besar: huruf_besar,
+            untuk: untuk,
             deskripsi: deskripsi,
             tanggal: tanggal,
             published: published,
@@ -341,7 +340,7 @@ export const VideosService = {
         where: { id_videos: parseInt(id) },
         data: {
           judul: judul,
-          huruf_besar: huruf_besar,
+          untuk: untuk,
           deskripsi: deskripsi,
           tanggal: tanggal,
           published: published,

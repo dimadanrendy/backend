@@ -1,7 +1,7 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Looking untukays to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
@@ -59,11 +59,10 @@ model Documents {
 model Photos {
   id_photos Int @id @default(autoincrement())
   judul     String
-  for       String
+  untuk     String
   deskripsi String @db.LongText
   bidang    String
   tanggal   String
-
   file      String
   published Boolean @default(false)
   author    User?    @relation(fields: [authorId], references: [id_users], onDelete: Cascade)
@@ -76,7 +75,7 @@ model Photos {
 model Videos {
   id_videos Int @id @default(autoincrement())
   judul     String
-  for       String
+  untuk     String
   deskripsi String @db.LongText
   bidang    String
   tanggal   String
