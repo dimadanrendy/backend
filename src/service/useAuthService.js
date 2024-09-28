@@ -3,10 +3,36 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid"; // Untuk membuat refresh_session unik
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import redis from "redis";
 
 dotenv.config(); // Load env variables
 
 const prisma = new PrismaClient();
+
+// cek prisma apaka sudah konek
+prisma
+  .$connect()
+  .then(() => {
+    console.log("- Prisma Client connected");
+  })
+  .catch((err) => {
+    console.log("Prisma connection error", err);
+  });
+
+const redisClient = redis.createClient({
+  host: "127.0.0.1",
+  port: 6379,
+});
+
+redisClient.on("error", (err) => {
+  console.log("Redis Client Error", err);
+});
+
+redisClient.on("connect", () => {
+  console.log("- Redis Client Connected");
+});
+
+redisClient.connect();
 
 export const AuthService = {
   async GetSessionAuth(id) {
@@ -81,34 +107,48 @@ export const AuthService = {
       const isEmail = /\S+@\S+\.\S+/.test(input);
 
       // Cek apakah session sudah ada
-      const existingSession = await prisma.session.findFirst({
-        where: isEmail ? { email: input } : { username: input },
-      });
+      // const existingSession = await prisma.session.findFirst({
+      //   where: isEmail ? { email: input } : { username: input },
+      // });
 
       // Cek apakah session sudah ada
-      if (existingSession) {
-        await prisma.session.delete({
-          where: { authorId: existingSession.authorId },
-        });
-        return {
-          status_code: 400,
-          status: false,
-          reset_cookies: true,
-          message: "Session already exists for this user",
-        };
-      }
+      // if (existingSession) {
+      //   await prisma.session.delete({
+      //     where: { authorId: existingSession.authorId },
+      //   });
+      //   return {
+      //     status_code: 400,
+      //     status: false,
+      //     reset_cookies: true,
+      //     message: "Session already exists for this user",
+      //   };
+      // }
+
+      // Cek redis apakah session ada
 
       // Cari user berdasarkan username atau email
       const user = await prisma.user.findFirst({
         where: isEmail ? { email: input } : { username: input },
       });
-
       // Cek apakah user ada
       if (!user) {
         return {
           status_code: 404,
           status: false,
           message: "Invalid username or password",
+        };
+      }
+
+      // Cek redis apakah session ada
+      const session = await redisClient.get(user.id_users);
+      if (session) {
+        // Hapus session lama
+        res.clearCookie("session_id");
+        await redisClient.del(user.id_users);
+        return {
+          status_code: 400,
+          status: false,
+          message: "Session already exists for this user",
         };
       }
 
@@ -162,16 +202,31 @@ export const AuthService = {
       });
 
       // Buat session di database
-      const session = await prisma.session.create({
-        data: {
-          authorId: user.id_users,
-          role: user.role,
-          username: user.username,
-          email: user.email,
-          expire_session: expire_session,
-          refresh_session: refresh_token,
-          status_login: true,
-        },
+      // const session = await prisma.session.create({
+      //   data: {
+      //     authorId: user.id_users,
+      //     role: user.role,
+      //     username: user.username,
+      //     email: user.email,
+      //     expire_session: expire_session,
+      //     refresh_session: refresh_token,
+      //     status_login: true,
+      //   },
+      // });
+
+      const setData = {
+        authorId: user.id_users,
+        role: user.role,
+        username: user.username,
+        email: user.email,
+        expire_session: expire_session,
+        refresh_session: refresh_token,
+        status_login: true,
+      };
+
+      // Set redis
+      await redisClient.set(user.id_users, JSON.stringify(setData), {
+        EX: 60 * 60,
       });
 
       // Return session object dan informasi user
@@ -211,9 +266,12 @@ export const AuthService = {
         };
       }
 
-      const session = await prisma.session.findFirst({
-        where: { authorId: id },
-      });
+      // const session = await prisma.session.findFirst({
+      //   where: { authorId: id },
+      // });
+
+      // Cek redis apakah session ada
+      const session = await redisClient.get(id);
 
       if (!session) {
         return {
@@ -223,10 +281,13 @@ export const AuthService = {
         };
       }
 
+      // Delete redis
+      await redisClient.del(id);
+
       // Hapus session di database
-      await prisma.session.delete({
-        where: { id_session: session.id_session },
-      });
+      // await prisma.session.delete({
+      //   where: { id_session: session.id_session },
+      // });
       return {
         status_code: 200,
         status: true,
@@ -249,9 +310,23 @@ export const AuthService = {
       const { userId } = req.params;
 
       // Cek apakah session_id valid
-      const session = await prisma.session.findFirst({
-        where: { refresh_session: session_id },
-      });
+      // const session = await prisma.session.findFirst({
+      //   where: { refresh_session: session_id },
+      // });
+
+      // Cek session_id dan user_id null
+      if (!session_id || !userId) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
+
+      // Cek redis apakah session ada
+      const data = await redisClient.get(userId);
+      const session = JSON.parse(data);
+
       if (!session) {
         return {
           status_code: 401,
@@ -308,13 +383,22 @@ export const AuthService = {
       const expire_session = new Date(Date.now() + 1000 * 60 * 60 * 24 * 1);
 
       // Update session
-      await prisma.session.update({
-        where: { id_session: session.id_session },
-        data: {
-          expire_session: expire_session, // 1 hari dari sekarang
-          refresh_session: newRefreshToken,
-        },
-      });
+      // await prisma.session.update({
+      //   where: { id_session: session.id_session },
+      //   data: {
+      //     expire_session: expire_session, // 1 hari dari sekarang
+      //     refresh_session: newRefreshToken,
+      //   },
+      // });
+
+      // Update redis
+      await redisClient.set(
+        userId,
+        JSON.stringify(session), // Nilai JSON yang disimpan
+        {
+          EX: 60 * 60, // Opsi untuk expire dalam detik (1 jam)
+        }
+      );
 
       // Hapus cookie lama
       res.clearCookie("session_id");
@@ -353,9 +437,13 @@ export const AuthService = {
           message: "Unauthorized",
         };
       }
-      const session = await prisma.session.findFirst({
-        where: { authorId: id },
-      });
+      // const session = await prisma.session.findFirst({
+      //   where: { authorId: id },
+      // });
+
+      // Cek redis apakah session ada
+      const data = await redisClient.get(id);
+      const session = JSON.parse(data);
 
       if (!session) {
         return {

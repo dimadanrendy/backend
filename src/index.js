@@ -46,7 +46,7 @@ app.use(
 app.use(express.json());
 app.use(tokenAccessServer);
 
-// Logger
+// Star Code Logger
 
 // Buat folder logs jika belum ada
 const logDir = path.join(process.cwd(), "logs");
@@ -66,7 +66,7 @@ const httpLogger = pinoHttp({ logger }); // Logger untuk HTTP
 // Gunakan pino-http sebagai middleware
 app.use(httpLogger);
 
-// end Logger
+// end Code Logger
 
 // Middleware cookie parser
 app.use(cookieParser());
