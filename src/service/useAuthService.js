@@ -248,6 +248,7 @@ export const AuthService = {
           role: user.role,
           email: user.email,
           name: user.name,
+          bidang: user.bidang,
           image: user.image,
         },
         access_token: access_token,
@@ -316,6 +317,8 @@ export const AuthService = {
       const { session_id } = req.cookies;
       const jwtSecret = process.env.JWT_SECRET_KEY;
       const { userId } = req.params;
+      const authHeader = req.headers["authorization"];
+      const token = authHeader && authHeader.split(" ")[1];
 
       // Cek apakah session_id valid
       // const session = await prisma.session.findFirst({
@@ -324,6 +327,14 @@ export const AuthService = {
 
       // Cek session_id dan user_id null
       if (!session_id || !userId) {
+        return {
+          status_code: 401,
+          status: false,
+          message: "Unauthorized",
+        };
+      }
+
+      if (session_id !== token) {
         return {
           status_code: 401,
           status: false,
@@ -482,6 +493,7 @@ export const AuthService = {
           role: session.role,
           email: user.email,
           name: user.name,
+          bidang: user.bidang,
           image: user.image,
         },
       };
