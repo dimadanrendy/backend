@@ -43,3 +43,42 @@ export const useAccessToken = async (req, res, next) => {
 
   next();
 };
+
+export const useRefreshToken = async (req, res, next) => {
+  const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  const { session_id } = req.cookies;
+  const { userId } = req.params;
+
+  if (!session_id && !userId && !token) {
+    return res.status(401).json({
+      status_code: 401,
+      status: false,
+      message: "Unauthorized",
+    });
+  }
+
+  try {
+    const decodedRefresh = await jwt.verify(session_id, jwtRefreshSecret);
+
+    if (!decodedRefresh) {
+      return res.status(401).json({
+        status_code: 401,
+        status: false,
+        message: "Unauthorized",
+      });
+    }
+    if (decodedRefresh) {
+      req.user = decodedRefresh;
+    }
+  } catch (error) {
+    return res.status(401).json({
+      status_code: 401,
+      status: false,
+      message: "Unauthorized",
+    });
+  }
+
+  next();
+};

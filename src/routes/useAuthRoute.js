@@ -6,7 +6,10 @@ import {
   GetAuthById,
   RefreshSession,
 } from "../controllers/useAuthController.js";
-import { useAccessToken } from "../middleware/useAccessToken.js";
+import {
+  useAccessToken,
+  useRefreshToken,
+} from "../middleware/useAccessToken.js";
 // import { validateAuth } from "../middleware/useValidator.js";
 
 const router = express.Router();
@@ -15,7 +18,7 @@ const router = express.Router();
 router.get("/", useAccessToken, GetAuth);
 router.get("/:id", useAccessToken, GetAuthById);
 router.post("/", PostAuth);
-router.patch("/:userId", useAccessToken, RefreshSession);
+router.patch("/:userId", useRefreshToken, RefreshSession);
 router.delete("/:id", useAccessToken, DeleteAuth);
 
 export default router;
