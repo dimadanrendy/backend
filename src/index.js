@@ -33,13 +33,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const PATCH = process.env.BASE_ROUTE;
 
+//origin
+const allowedOrigins = [
+  "http://localhost",
+  "http://localhost:3000",
+  "http://192.168.81.45",
+  "http://192.168.81.45:3000",
+];
+
 // Middleware limiter
 app.use(limiter);
 
 // Middleware cors
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      console.log(origin);
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );

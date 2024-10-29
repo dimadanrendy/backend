@@ -48,10 +48,10 @@ export const useRefreshToken = async (req, res, next) => {
   const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  const { session_id } = req.cookies;
-  const { userId } = req.params;
+  const jwtDecoded = jwt.decode(token);
+  const { id: session_id } = jwtDecoded;
 
-  if (!session_id && !userId && !token) {
+  if (!session_id && !token) {
     return res.status(401).json({
       status_code: 401,
       status: false,
@@ -60,7 +60,7 @@ export const useRefreshToken = async (req, res, next) => {
   }
 
   try {
-    const decodedRefresh = await jwt.verify(session_id, jwtRefreshSecret);
+    const decodedRefresh = await jwt.verify(token, jwtRefreshSecret);
 
     if (!decodedRefresh) {
       return res.status(401).json({

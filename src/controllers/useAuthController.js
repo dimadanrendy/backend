@@ -9,7 +9,10 @@ export const PostAuth = async (req, res) => {
   // Jika login gagal, kirim respons dengan pesan error
   if (session.status === false) {
     if (session.reset_cookies === true) {
-      res.clearCookie("session_id");
+      res.clearCookie("X_ACCESS_TOKEN");
+      res.clearCookie("X_REFRESH_TOKEN");
+
+      return res.status(session.status_code).json(session);
     }
     return res.status(session.status_code).json(session);
   }
@@ -28,13 +31,11 @@ export const RefreshSession = async (req, res) => {
 };
 
 export const DeleteAuth = async (req, res) => {
-  const session = await AuthService.LogoutSession(req);
+  const session = await AuthService.LogoutSession(req, res);
 
   if (session.status === false) {
     return res.status(session.status_code).json(session);
   }
-
-  res.clearCookie("session_id");
 
   return res.status(session.status_code).json(session);
 };

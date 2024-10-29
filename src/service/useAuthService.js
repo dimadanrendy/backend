@@ -178,23 +178,20 @@ export const AuthService = {
           message: "User not active",
         };
       }
-
-      // Tentukan expire_session dan refresh_session
-      const expire_session = new Date(Date.now() + 1000 * 60 * 60 * 24 * 1); // 1 days from now
-
       // jwt payload
       const payload = {
         id: user.id_users,
-        role: user.role,
         username: user.username,
+        role: user.role,
         email: user.email,
         name: user.name,
+        bidang: user.bidang,
         image: user.image,
       };
 
       // Buat jwt access token
       const access_token = jwt.sign(payload, jwtSecret, {
-        expiresIn: "15m",
+        expiresIn: "1h",
       });
 
       // Buat jwt refresh token
@@ -203,31 +200,29 @@ export const AuthService = {
       });
 
       // Set cookie
-      res.cookie("session_id", refresh_token, {
+      res.cookie("X_REFRESH_TOKEN", refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 2,
+      });
+
+      res.cookie("X_ACCESS_TOKEN", access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 2,
       });
 
       // Set redis
-      await redisClient.set(user.id_users, JSON.stringify(payload), {
-        EX: 1000 * 60 * 60 * 2,
-      });
+      await redisClient.set(user.id_users, JSON.stringify(payload));
+
+      await redisClient.expire(user.id_users, 7200);
 
       // Return session object dan informasi user
       return {
         status_code: 200,
         status: true,
         message: "Login successful",
-        user: {
-          id: user.id_users,
-          username: user.username,
-          role: user.role,
-          email: user.email,
-          name: user.name,
-          bidang: user.bidang,
-          image: user.image,
-        },
+        user: payload,
         access_token: access_token,
         refresh_token: refresh_token,
       };
@@ -240,12 +235,11 @@ export const AuthService = {
     }
   },
 
-  async LogoutSession(req) {
+  async LogoutSession(req, res) {
     try {
       const { id: session_id } = req.user;
-      const { id } = req.params;
 
-      if ((!session_id && !id) || session_id !== id) {
+      if (!session_id) {
         return {
           status_code: 401,
           status: false,
@@ -258,7 +252,7 @@ export const AuthService = {
       // });
 
       // Cek redis apakah session ada
-      const session = await redisClient.get(id);
+      const session = await redisClient.get(session_id);
 
       if (!session) {
         return {
@@ -269,7 +263,9 @@ export const AuthService = {
       }
 
       // Delete redis
-      await redisClient.del(id);
+      await redisClient.del(session_id);
+      res.clearCookie("X_REFRESH_TOKEN");
+      res.clearCookie("X_ACCESS_TOKEN");
 
       // Hapus session di database
       // await prisma.session.delete({
@@ -293,7 +289,7 @@ export const AuthService = {
     const jwtSecret = process.env.JWT_SECRET_KEY;
     const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
     try {
-      const { userId } = req.params;
+      const { id: userId } = req.user;
       // Cek redis apakah session ada
       const data = await redisClient.get(userId);
       const session = JSON.parse(data);
@@ -318,7 +314,7 @@ export const AuthService = {
         { id, role, username, email, name, image },
         jwtSecret,
         {
-          expiresIn: "15m",
+          expiresIn: "1h",
         }
       );
 
@@ -331,19 +327,17 @@ export const AuthService = {
       );
 
       // Update redis
-      await redisClient.set(
-        userId,
-        JSON.stringify(session), // Nilai JSON yang disimpan
-        {
-          EX: 1000 * 60 * 60 * 2,
-        }
-      );
-
-      // Hapus cookie lama
-      res.clearCookie("session_id");
+      await redisClient.set(userId, JSON.stringify(session));
+      await redisClient.expire(userId, 7200);
 
       // Set cookie baru dengan token yang baru
-      res.cookie("session_id", newRefreshToken, {
+      res.cookie("X_REFRESH_TOKEN", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 2,
+      });
+
+      res.cookie("X_ACCESS_TOKEN", newToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 2,

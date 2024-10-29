@@ -18,7 +18,7 @@ const router = express.Router();
 router.get("/", useAccessToken, GetAuth);
 router.get("/:id", useAccessToken, GetAuthById);
 router.post("/", PostAuth);
-router.patch("/:userId", useRefreshToken, RefreshSession);
-router.delete("/:id", useAccessToken, DeleteAuth);
+router.patch("/", useRefreshToken, RefreshSession);
+router.delete("/", useAccessToken, DeleteAuth);
 
 export default router;
