@@ -39,6 +39,8 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://192.168.81.45",
   "http://192.168.81.45:3000",
+  "http://192.168.200.110",
+  "http://192.168.200.110:3000",
 ];
 
 // Middleware limiter
