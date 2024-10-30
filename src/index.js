@@ -34,17 +34,17 @@ const PORT = process.env.PORT || 5000;
 const PATCH = process.env.BASE_ROUTE;
 
 //origin
-const allowedOrigins = [
-  "http://localhost",
-  "http://localhost:3000",
-  "http://192.168.81.45",
-  "http://192.168.81.45:3000",
-  "http://192.168.200.110",
-  "http://192.168.200.110:3000",
-  "https://bakeuda.muhammadrendyariawan.site",
-  "https://backend.muhammadrendyariawan.site",
-];
-
+// const allowedOrigins = [
+//   "http://localhost",
+//   "http://localhost:3000",
+//   "http://192.168.81.45",
+//   "http://192.168.81.45:3000",
+//   "http://192.168.200.110",
+//   "http://192.168.200.110:3000",
+//   "https://bakeuda.muhammadrendyariawan.site",
+//   "https://backend.muhammadrendyariawan.site",
+// ];
+const allowedOrigins = ["https://bakeuda.muhammadrendyariawan.site"];
 // Middleware limiter
 app.use(limiter);
 
