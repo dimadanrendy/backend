@@ -266,8 +266,19 @@ export const AuthService = {
 
       // Delete redis
       await redisClient.del(session_id);
-      res.clearCookie("X_REFRESH_TOKEN");
-      res.clearCookie("X_ACCESS_TOKEN");
+      res.clearCookie("X_REFRESH_TOKEN", {
+        domain: ".muhammadrendyariawan.site",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/", // Tambahkan path jika perlu
+      });
+
+      res.clearCookie("X_ACCESS_TOKEN", {
+        domain: ".muhammadrendyariawan.site",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/", // Tambahkan path jika perlu
+      });
 
       // Hapus session di database
       // await prisma.session.delete({

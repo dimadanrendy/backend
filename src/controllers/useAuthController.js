@@ -36,8 +36,6 @@ export const DeleteAuth = async (req, res) => {
   if (session.status === false) {
     return res.status(session.status_code).json(session);
   }
-  res.clearCookie("X_REFRESH_TOKEN");
-  res.clearCookie("X_ACCESS_TOKEN");
   return res.status(session.status_code).json(session);
 };
 
