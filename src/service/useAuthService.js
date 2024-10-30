@@ -200,19 +200,9 @@ export const AuthService = {
       });
 
       // Set cookie
-      res.cookie("X_REFRESH_TOKEN", refresh_token, {
-        domain: ".muhammadrendyariawan.site",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 2,
-      });
+      res.cookie("X_REFRESH_TOKEN", refresh_token);
 
-      res.cookie("X_ACCESS_TOKEN", access_token, {
-        domain: ".muhammadrendyariawan.site",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 2,
-      });
+      res.cookie("X_ACCESS_TOKEN", access_token);
 
       // Set redis
       await redisClient.set(user.id_users, JSON.stringify(payload));
@@ -266,19 +256,9 @@ export const AuthService = {
 
       // Delete redis
       await redisClient.del(session_id);
-      res.clearCookie("X_REFRESH_TOKEN", {
-        domain: ".muhammadrendyariawan.site",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        path: "/", // Tambahkan path jika perlu
-      });
+      res.clearCookie("X_REFRESH_TOKEN");
 
-      res.clearCookie("X_ACCESS_TOKEN", {
-        domain: ".muhammadrendyariawan.site",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        path: "/", // Tambahkan path jika perlu
-      });
+      res.clearCookie("X_ACCESS_TOKEN");
 
       res.cookie("X_REFRESH_TOKEN", "", {
         domain: ".muhammadrendyariawan.site",
