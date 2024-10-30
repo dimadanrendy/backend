@@ -201,12 +201,14 @@ export const AuthService = {
 
       // Set cookie
       res.cookie("X_REFRESH_TOKEN", refresh_token, {
+        domain: ".muhammadrendyariawan.site",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 2,
       });
 
       res.cookie("X_ACCESS_TOKEN", access_token, {
+        domain: ".muhammadrendyariawan.site",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 2,
