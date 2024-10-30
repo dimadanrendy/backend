@@ -280,6 +280,22 @@ export const AuthService = {
         path: "/", // Tambahkan path jika perlu
       });
 
+      res.cookie("X_REFRESH_TOKEN", "", {
+        domain: ".muhammadrendyariawan.site",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/", // Tambahkan path jika perlu
+        maxAge: 0,
+      });
+
+      res.cookie("X_ACCESS_TOKEN", "", {
+        domain: ".muhammadrendyariawan.site",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/", // Tambahkan path jika perlu
+        maxAge: 0,
+      });
+
       // Hapus session di database
       // await prisma.session.delete({
       //   where: { id_session: session.id_session },
