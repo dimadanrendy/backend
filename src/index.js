@@ -55,7 +55,6 @@ app.use(limiter);
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log(origin);
       if (allowedOrigins.includes(origin) || !origin) {
         callback(null, true);
       } else {
