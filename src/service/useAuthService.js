@@ -150,8 +150,6 @@ export const AuthService = {
       // Cek redis apakah session ada
       const session = await redisClient.get(user.id_users);
       if (session) {
-        // Hapus session lama
-        res.clearCookie("session_id");
         await redisClient.del(user.id_users);
         return {
           status_code: 400,
@@ -200,9 +198,17 @@ export const AuthService = {
       });
 
       // Set cookie
-      res.cookie("X_REFRESH_TOKEN", refresh_token);
+      res.cookie("X_REFRESH_TOKEN", refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7200000,
+      });
 
-      res.cookie("X_ACCESS_TOKEN", access_token);
+      res.cookie("X_ACCESS_TOKEN", access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7200000,
+      });
 
       // Set redis
       await redisClient.set(user.id_users, JSON.stringify(payload));
@@ -259,22 +265,6 @@ export const AuthService = {
       res.clearCookie("X_REFRESH_TOKEN");
 
       res.clearCookie("X_ACCESS_TOKEN");
-
-      res.cookie("X_REFRESH_TOKEN", "", {
-        domain: ".muhammadrendyariawan.site",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        path: "/", // Tambahkan path jika perlu
-        maxAge: 0,
-      });
-
-      res.cookie("X_ACCESS_TOKEN", "", {
-        domain: ".muhammadrendyariawan.site",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        path: "/", // Tambahkan path jika perlu
-        maxAge: 0,
-      });
 
       // Hapus session di database
       // await prisma.session.delete({
