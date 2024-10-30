@@ -42,6 +42,7 @@ const allowedOrigins = [
   "http://192.168.200.110",
   "http://192.168.200.110:3000",
   "https://bakeuda.muhammadrendyariawan.site",
+  "https://backend.muhammadrendyariawan.site",
 ];
 
 // Middleware limiter
