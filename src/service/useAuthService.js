@@ -189,7 +189,7 @@ export const AuthService = {
 
       // Buat jwt access token
       const access_token = jwt.sign(payload, jwtSecret, {
-        expiresIn: "1h",
+        expiresIn: "3s",
       });
 
       // Buat jwt refresh token

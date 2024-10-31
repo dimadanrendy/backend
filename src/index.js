@@ -47,6 +47,7 @@ const PATCH = process.env.BASE_ROUTE;
 const allowedOrigins = [
   "https://bakeuda.muhammadrendyariawan.site",
   "http://192.168.81.45:3000",
+  "http://localhost:3000",
 ];
 // Middleware limiter
 app.use(limiter);

@@ -37,7 +37,7 @@ export const useAccessToken = async (req, res, next) => {
     return res.status(401).json({
       status_code: 401,
       status: false,
-      message: "Unauthorized",
+      message: error.message,
     });
   }
 
