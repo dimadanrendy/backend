@@ -134,18 +134,31 @@ export const UsersService = {
 
   async deleteUser(id) {
     try {
-      // Hapus pengguna
-      const deletedUser = await prisma.user.delete({
+      // Cek apakah user ada
+      const user = await prisma.user.findUnique({
         where: { id_users: id },
       });
 
-      if (!deletedUser) {
+      if (!user) {
         return {
           status_code: 404,
           status: false,
           message: "User not found",
         };
       }
+
+      if (user.email === "admin@gmai.com") {
+        return {
+          status_code: 400,
+          status: false,
+          message: "Cannot delete admin",
+        };
+      }
+
+      // Hapus pengguna
+      const deletedUser = await prisma.user.delete({
+        where: { id_users: id },
+      });
 
       return {
         status_code: 200,

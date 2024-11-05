@@ -184,12 +184,11 @@ export const AuthService = {
         email: user.email,
         name: user.name,
         bidang: user.bidang,
-        image: user.image,
       };
 
       // Buat jwt access token
       const access_token = jwt.sign(payload, jwtSecret, {
-        expiresIn: "10s",
+        expiresIn: "1h",
       });
 
       // Buat jwt refresh token
@@ -313,7 +312,7 @@ export const AuthService = {
         { id, role, username, email, name, image },
         jwtSecret,
         {
-          expiresIn: "10s",
+          expiresIn: "1h",
         }
       );
 
