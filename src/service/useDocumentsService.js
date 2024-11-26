@@ -110,7 +110,8 @@ export const DocumentsService = {
 
   async PostDocuments(data) {
     try {
-      const { id: user_id, role, username, email } = data.user;
+      const { id: user_id, role, name, username, email } = data.user;
+
       const { filename } = data.file;
       const {
         nomor,
@@ -134,21 +135,10 @@ export const DocumentsService = {
         };
       }
 
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        return {
-          status_code: 404,
-          status: false,
-          message: "Session not found",
-        };
-      }
       const published = true;
       const file = filename;
-      const authorId = session.authorId;
-      const authorUsername = session.username;
+      const authorId = user_id;
+      const authorUsername = username;
 
       const documents = await prisma.documents.create({
         data: {
@@ -175,6 +165,7 @@ export const DocumentsService = {
         message: "Documents created",
       };
     } catch (error) {
+      console.error(error.message);
       return {
         status_code: 500,
         status: false,
@@ -186,9 +177,9 @@ export const DocumentsService = {
   async PatchDocuments(req) {
     try {
       const { id: user_id, role, username, email } = req.user;
-      const { id } = req.params;
-      const { filename } = req.file;
+      const filename = req.file;
       const {
+        id,
         nomor,
         judul,
         tipe_dokumen,
@@ -203,74 +194,55 @@ export const DocumentsService = {
         published,
       } = req.body;
 
-      const file = filename;
+      const file = filename?.filename;
+
+      const publish = published === "true" ? true : false;
 
       const deleteFile = () => {
-        const filePath = path.join(process.cwd(), "uploads", "documents", file);
-        fs.unlink(filePath, (err) => {
-          if (err) {
-            console.error(err);
-          }
-        });
+        if (file) {
+          const filePath = path.join(
+            process.cwd(),
+            "uploads",
+            "documents",
+            file
+          );
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error(err);
+            }
+          });
+        } else {
+          return;
+        }
       };
 
-      if (user_id === undefined || user_id === null) {
-        deleteFile();
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
-      if (!file) {
-        deleteFile();
-        return {
-          status_code: 400,
-          status: false,
-          message: "File not found",
-        };
-      }
-
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Session not found",
-        };
-      }
-
       // jika user suoeradmin atau admin bisa mengubah semua dokumen
-      if (session.role === "admin" || session.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         // hapus file sebelumnya dalam storage
         const cek_documents = await prisma.documents.findFirst({
           where: { id_documents: parseInt(id) },
         });
 
-        if (cek_documents && cek_documents.file) {
-          try {
-            // Hapus file sebelumnya
-            const filePath = path.join(
-              process.cwd(),
-              "uploads",
-              "documents",
-              cek_documents.file
-            );
+        if (!cek_documents) {
+          deleteFile();
+          return {
+            status_code: 404,
+            status: false,
+            message: "Documents not found",
+          };
+        }
 
-            // Cek apakah file ada sebelum dihapus
-            fs.unlinkSync(filePath); // Menghapus file
-          } catch (err) {
-            return {
-              status_code: 500,
-              status: false,
-              message: err.message,
-            };
-          }
+        if (file) {
+          // Hapus file sebelumnya
+          const filePath = path.join(
+            process.cwd(),
+            "uploads",
+            "documents",
+            cek_documents.file
+          );
+
+          // Cek apakah file ada sebelum dihapus
+          fs.unlinkSync(filePath);
         }
 
         const documents = await prisma.documents.update({
@@ -287,18 +259,10 @@ export const DocumentsService = {
             tempat_penetapan: tempat_penetapan,
             sumber: sumber,
             lokasi: lokasi,
-            published: published,
+            published: publish,
             file: file,
           },
         });
-        if (!documents) {
-          deleteFile();
-          return {
-            status_code: 404,
-            status: false,
-            message: "Documents not found",
-          };
-        }
 
         return {
           status_code: 200,
@@ -307,20 +271,19 @@ export const DocumentsService = {
         };
       }
 
-      // Jika authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (session.authorId !== user_id) {
-        deleteFile();
-        return {
-          status_code: 403,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
       // hapus file sebelumnya dalam storage
       const cek_documents = await prisma.documents.findFirst({
-        where: { id_documents: parseInt(id) }, // pastikan 'id' sudah diambil dari request atau sumber lain
+        where: { id_documents: parseInt(id) },
       });
+
+      if (!cek_documents) {
+        deleteFile();
+        return {
+          status_code: 404,
+          status: false,
+          message: "Documents not found",
+        };
+      }
 
       // jika document authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
       if (cek_documents && cek_documents.authorId !== user_id) {
@@ -332,16 +295,7 @@ export const DocumentsService = {
         };
       }
 
-      if (!cek_documents) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Documents not found",
-        };
-      }
-
-      if (cek_documents && cek_documents.file) {
+      if (file !== null) {
         try {
           // Hapus file sebelumnya
           const filePath = path.join(
@@ -352,7 +306,7 @@ export const DocumentsService = {
           );
 
           // Cek apakah file ada sebelum dihapus
-          fs.unlinkSync(filePath); // Menghapus file
+          fs.unlinkSync(filePath);
         } catch (err) {
           return {
             status_code: 500,
@@ -360,6 +314,8 @@ export const DocumentsService = {
             message: err.message,
           };
         }
+      } else {
+        file = cek_documents.file;
       }
 
       const documents = await prisma.documents.update({
@@ -376,18 +332,10 @@ export const DocumentsService = {
           tempat_penetapan: tempat_penetapan,
           sumber: sumber,
           lokasi: lokasi,
-          published: published,
+          published: publish,
           file: file,
         },
       });
-      if (!documents) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Documents not found",
-        };
-      }
 
       return {
         status_code: 200,
@@ -407,17 +355,6 @@ export const DocumentsService = {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
 
       // cek documents authorId
       const cek_documents = await prisma.documents.findFirst({
@@ -434,7 +371,7 @@ export const DocumentsService = {
       const file = cek_documents?.file;
 
       // jika role admin atau superadmin
-      if (session.role === "admin" || session.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const documents = await prisma.documents.delete({
           where: { id_documents: parseInt(id) },
         });

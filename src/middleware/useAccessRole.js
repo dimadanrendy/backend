@@ -44,13 +44,13 @@ export const useAccessRole = async (req, res, next) => {
       });
     }
 
-    if (req.user.role !== "admin" && req.user.role !== "superadmin") {
-      return res.status(403).json({
-        status_code: 403,
-        status: false,
-        message: "Access denied",
-      });
-    }
+    // if (req.user.role !== "admin" && req.user.role !== "superadmin") {
+    //   return res.status(403).json({
+    //     status_code: 403,
+    //     status: false,
+    //     message: "Access denied",
+    //   });
+    // }
   } catch (error) {
     return res.status(500).json({
       status_code: 500,

@@ -97,7 +97,6 @@ export const AuthService = {
     }
   },
   async LoginSession(req, res) {
-    console.log(req);
     try {
       const jwtSecret = process.env.JWT_SECRET_KEY;
       const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
@@ -197,17 +196,19 @@ export const AuthService = {
         expiresIn: "2h",
       });
 
+      // ambil jam sekarang
+
       // Set cookie
       res.cookie("X_REFRESH_TOKEN", refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 7200000,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 2),
       });
 
       res.cookie("X_ACCESS_TOKEN", access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 7200000,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 2),
       });
 
       // Set redis
@@ -333,13 +334,16 @@ export const AuthService = {
       res.cookie("X_REFRESH_TOKEN", newRefreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 2,
+        // buat jadi zona waktu indoensia
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 2),
       });
 
       res.cookie("X_ACCESS_TOKEN", newToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 2,
+        // buat jadi zona waktu indoensia
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 2),
+        // maxAge: 1000 * 60 * 60 * 2,
       });
 
       return {
