@@ -16,6 +16,8 @@ import useUsersRoute from "./routes/useUsersRoute.js";
 import useAuthRoute from "./routes/useAuthRoute.js";
 import useHandleFileRoute from "./routes/useHandleFileRoute.js";
 import useSpptRoute from "./routes/useSpptRoute.js";
+import usePegawaiRoute from "./routes/usePegawaiRoute.js";
+import useGetFronend from "./routes/useGetFronendRoute.js";
 
 // Middleware
 import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
@@ -26,7 +28,7 @@ dotenv.config();
 // Limit request
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 15 menit
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 500, // limit each IP to 100 requests per windowMs
 });
 
 // Init
@@ -67,6 +69,10 @@ app.use(
   })
 );
 app.use(express.json());
+
+// Middleware static file
+app.use(`/api/v1/access/file`, express.static("uploads"));
+
 app.use(tokenAccessServer);
 
 // Star Code Logger
@@ -102,6 +108,8 @@ app.use(`${PATCH}/users`, useUsersRoute);
 app.use(`${PATCH}/auth`, useAuthRoute);
 app.use(`${PATCH}/file`, useHandleFileRoute);
 app.use(`${PATCH}/sppt`, useSpptRoute);
+app.use(`${PATCH}/pegawai`, usePegawaiRoute);
+app.use(`${PATCH}/get`, useGetFronend);
 
 app.use((req, res, next) => {
   res.status(404).send("Halaman tidak ditemukan");

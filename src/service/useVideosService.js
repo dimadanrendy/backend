@@ -10,47 +10,50 @@ export const VideosService = {
     try {
       const { id: user_id, role, username, email } = req.user;
 
-      // cek session user
-      const session = await AuthService.GetSessionAuth(user_id);
-      if (session.status === false) {
-        return session;
-      }
-
       // cek role user apakah admin jika admin atau super admin tampilkan semua dokumen
-      if (session.user.role === "admin" || session.user.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const videos = await prisma.videos.findMany();
 
         if (!videos) {
           return {
             status_code: 404,
             status: false,
-            message: "Videos not found",
+            message: "Video not found",
           };
         }
+        const videosWithUrls = videos.map((video) => ({
+          ...video,
+          videoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/videos/${video.file}`,
+        }));
         return {
           status_code: 200,
           status: true,
-          data: videos,
+          data: videosWithUrls,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
       const videos = await prisma.videos.findMany({
-        where: { authorId: session.user.id },
+        where: { authorId: user_id },
       });
 
       if (!videos) {
         return {
           status_code: 404,
           status: false,
-          message: "Videos not found",
+          message: "Video not found",
         };
       }
+
+      const videosWithUrls = videos.map((video) => ({
+        ...video,
+        videoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/videos/${video.file}`,
+      }));
 
       return {
         status_code: 200,
         status: true,
-        data: videos,
+        data: videosWithUrls,
       };
     } catch (error) {
       return {
@@ -66,14 +69,8 @@ export const VideosService = {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
-
-      // cek session user
-      const session = await AuthService.GetSessionAuth(user_id);
-      if (session.status === false) {
-        return session;
-      }
       // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
-      if (session.user.role === "admin" || session.user.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const videos = await prisma.videos.findUnique({
           where: { id_videos: parseInt(id) },
         });
@@ -82,32 +79,40 @@ export const VideosService = {
           return {
             status_code: 404,
             status: false,
-            message: "Document not found",
+            message: "Videos not found",
           };
         }
+        const videosWithUrls = videos.map((video) => ({
+          ...video,
+          videoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/image/${video.file}`,
+        }));
         return {
           status_code: 200,
           status: true,
-          data: videos,
+          data: videosWithUrls,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
       const videos = await prisma.videos.findUnique({
-        where: { id_videos: parseInt(id), authorId: session.user.id },
+        where: { id_videos: parseInt(id), authorId: user_id },
       });
 
       if (!videos) {
         return {
           status_code: 404,
           status: false,
-          message: "Document not found",
+          message: "Videos not found",
         };
       }
+      const videosWithUrls = videos.map((video) => ({
+        ...video,
+        videoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/videos/${video.file}`,
+      }));
       return {
         status_code: 200,
         status: true,
-        data: videos,
+        data: videosWithUrls,
       };
     } catch (error) {
       return {
@@ -123,49 +128,27 @@ export const VideosService = {
     try {
       const { id: user_id, role, username, email } = data.user;
       const { filename } = data.file;
-      const { judul, untuk, deskripsi, bidang, tanggal } = data.body;
-
-      if (user_id === undefined || user_id === null) {
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        return {
-          status_code: 404,
-          status: false,
-          message: "Session not found",
-        };
-      }
+      const { judul, tipe, deskripsi, bidang, tanggal } = data.body;
       const published = true;
       const file = filename;
-      const authorId = session.authorId;
-      const authorUsername = session.username;
 
       const videos = await prisma.videos.create({
         data: {
           judul: judul,
-          untuk: untuk,
+          tipe: tipe,
           tanggal: tanggal,
           bidang: bidang,
           deskripsi: deskripsi,
           published: published,
           file: file,
-          authorId: authorId,
-          authorUsername: authorUsername,
+          authorId: user_id,
+          authorUsername: username,
         },
       });
       return {
         status_code: 201,
         status: true,
-        message: "Videos created",
+        message: "Video created",
       };
     } catch (error) {
       return {
@@ -194,63 +177,33 @@ export const VideosService = {
         });
       };
 
-      if (user_id === undefined || user_id === null) {
-        deleteFile();
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
-      if (!file) {
-        deleteFile();
-        return {
-          status_code: 400,
-          status: false,
-          message: "File not found",
-        };
-      }
-
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Session not found",
-        };
-      }
-
       // jika user suoeradmin atau admin bisa mengubah semua dokumen
-      if (session.role === "admin" || session.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         // hapus file sebelumnya dalam storage
-        const cek_videos = await prisma.videos.findFirst({
-          where: { id_videos: parseInt(id) },
+        const cek_videos = await prisma.photos.findFirst({
+          where: { id_photos: parseInt(id) },
         });
 
-        if (cek_videos && cek_videos.file) {
-          try {
-            // Hapus file sebelumnya
-            const filePath = path.join(
-              process.cwd(),
-              "uploads",
-              "videos",
-              cek_videos.file
-            );
+        if (!cek_videos) {
+          deleteFile();
+          return {
+            status_code: 404,
+            status: false,
+            message: "Video not found",
+          };
+        }
 
-            // Cek apakah file ada sebelum dihapus
-            fs.unlinkSync(filePath); // Menghapus file
-          } catch (err) {
-            return {
-              status_code: 500,
-              status: false,
-              message: err.message,
-            };
-          }
+        if (file) {
+          // Hapus file sebelumnya
+          const filePath = path.join(
+            process.cwd(),
+            "uploads",
+            "videos",
+            cek_videos.file
+          );
+
+          // Cek apakah file ada sebelum dihapus
+          fs.unlinkSync(filePath);
         }
 
         const videos = await prisma.videos.update({
@@ -265,14 +218,6 @@ export const VideosService = {
             file: file,
           },
         });
-        if (!videos) {
-          deleteFile();
-          return {
-            status_code: 404,
-            status: false,
-            message: "Videos not found",
-          };
-        }
 
         return {
           status_code: 200,
@@ -281,20 +226,19 @@ export const VideosService = {
         };
       }
 
-      // Jika authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (session.authorId !== user_id) {
-        deleteFile();
-        return {
-          status_code: 403,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
       // hapus file sebelumnya dalam storage
       const cek_videos = await prisma.videos.findFirst({
         where: { id_videos: parseInt(id) }, // pastikan 'id' sudah diambil dari request atau sumber lain
       });
+
+      if (!cek_videos) {
+        deleteFile();
+        return {
+          status_code: 404,
+          status: false,
+          message: "Photo not found",
+        };
+      }
 
       // jika document authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
       if (cek_videos && cek_videos.authorId !== user_id) {
@@ -306,34 +250,17 @@ export const VideosService = {
         };
       }
 
-      if (!cek_videos) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Videos not found",
-        };
-      }
+      if (file) {
+        // Hapus file sebelumnya
+        const filePath = path.join(
+          process.cwd(),
+          "uploads",
+          "videos",
+          cek_videos.file
+        );
 
-      if (cek_videos && cek_videos.file) {
-        try {
-          // Hapus file sebelumnya
-          const filePath = path.join(
-            process.cwd(),
-            "uploads",
-            "videos",
-            cek_videos.file
-          );
-
-          // Cek apakah file ada sebelum dihapus
-          fs.unlinkSync(filePath); // Menghapus file
-        } catch (err) {
-          return {
-            status_code: 500,
-            status: false,
-            message: err.message,
-          };
-        }
+        // Cek apakah file ada sebelum dihapus
+        fs.unlinkSync(filePath);
       }
 
       const videos = await prisma.videos.update({
@@ -348,19 +275,11 @@ export const VideosService = {
           file: file,
         },
       });
-      if (!videos) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Videos not found",
-        };
-      }
 
       return {
         status_code: 200,
         status: true,
-        message: "Videos updated",
+        message: "Video updated",
       };
     } catch (error) {
       return {
@@ -375,17 +294,6 @@ export const VideosService = {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
 
       // cek videos authorId
       const cek_videos = await prisma.videos.findFirst({
@@ -396,13 +304,13 @@ export const VideosService = {
         return {
           status_code: 404,
           status: false,
-          message: "Videos not found",
+          message: "Video not found",
         };
       }
       const file = cek_videos?.file;
 
       // jika role admin atau superadmin
-      if (session.role === "admin" || session.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const videos = await prisma.videos.delete({
           where: { id_videos: parseInt(id) },
         });
@@ -427,7 +335,7 @@ export const VideosService = {
         return {
           status_code: 200,
           status: true,
-          message: "videos deleted",
+          message: "video deleted",
         };
       }
 
@@ -458,7 +366,7 @@ export const VideosService = {
       return {
         status_code: 200,
         status: true,
-        message: "Videos deleted",
+        message: "Video deleted",
       };
     } catch (error) {
       return {

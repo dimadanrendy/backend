@@ -37,6 +37,30 @@ export const HandleFileService = {
       };
     }
   },
+  async GetFileGambarPegawai(req, res) {
+    try {
+      const filename = req.params.filename;
+      const filepath = path.join(process.cwd(), "uploads", "pegawai", filename);
+
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({
+          status_code: 404,
+          status: false,
+          message: "File not found",
+        });
+      }
+
+      // Kirim file gambar langsung
+      res.setHeader("Cache-Control", "public, max-age=86400"); // Cache 1 hari
+      return res.sendFile(filepath);
+    } catch (error) {
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+      };
+    }
+  },
   async GetFileVideo(req, res) {
     try {
       const filename = req.params.filename;

@@ -2,6 +2,9 @@ import { AuthService } from "./useAuthService.js";
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const prisma = new PrismaClient();
 
@@ -10,14 +13,8 @@ export const PhotosService = {
     try {
       const { id: user_id, role, username, email } = req.user;
 
-      // cek session user
-      const session = await AuthService.GetSessionAuth(user_id);
-      if (session.status === false) {
-        return session;
-      }
-
       // cek role user apakah admin jika admin atau super admin tampilkan semua dokumen
-      if (session.user.role === "admin" || session.user.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const photos = await prisma.photos.findMany();
 
         if (!photos) {
@@ -27,16 +24,20 @@ export const PhotosService = {
             message: "photos not found",
           };
         }
+        const photosWithUrls = photos.map((photo) => ({
+          ...photo,
+          photoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/photos/${photo.file}`,
+        }));
         return {
           status_code: 200,
           status: true,
-          data: photos,
+          data: photosWithUrls,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
       const photos = await prisma.photos.findMany({
-        where: { authorId: session.user.id },
+        where: { authorId: user_id },
       });
 
       if (!photos) {
@@ -47,10 +48,15 @@ export const PhotosService = {
         };
       }
 
+      const photosWithUrls = photos.map((photo) => ({
+        ...photo,
+        photoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/photos/${photo.file}`,
+      }));
+
       return {
         status_code: 200,
         status: true,
-        data: photos,
+        data: photosWithUrls,
       };
     } catch (error) {
       return {
@@ -66,14 +72,8 @@ export const PhotosService = {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
-
-      // cek session user
-      const session = await AuthService.GetSessionAuth(user_id);
-      if (session.status === false) {
-        return session;
-      }
       // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
-      if (session.user.role === "admin" || session.user.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const photos = await prisma.photos.findUnique({
           where: { id_photos: parseInt(id) },
         });
@@ -82,32 +82,40 @@ export const PhotosService = {
           return {
             status_code: 404,
             status: false,
-            message: "Document not found",
+            message: "Photo not found",
           };
         }
+        const photosWithUrls = photos.map((photo) => ({
+          ...photo,
+          photoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/photos/${photo.file}`,
+        }));
         return {
           status_code: 200,
           status: true,
-          data: photos,
+          data: photosWithUrls,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
       const photos = await prisma.photos.findUnique({
-        where: { id_photos: parseInt(id), authorId: session.user.id },
+        where: { id_photos: parseInt(id), authorId: user_id },
       });
 
       if (!photos) {
         return {
           status_code: 404,
           status: false,
-          message: "Document not found",
+          message: "Photo not found",
         };
       }
+      const photosWithUrls = photos.map((photo) => ({
+        ...photo,
+        photoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/photos/${photo.file}`,
+      }));
       return {
         status_code: 200,
         status: true,
-        data: photos,
+        data: photosWithUrls,
       };
     } catch (error) {
       return {
@@ -123,43 +131,21 @@ export const PhotosService = {
     try {
       const { id: user_id, role, username, email } = data.user;
       const { filename } = data.file;
-      const { judul, untuk, deskripsi, bidang, tanggal } = data.body;
-
-      if (user_id === undefined || user_id === null) {
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        return {
-          status_code: 404,
-          status: false,
-          message: "Session not found",
-        };
-      }
+      const { judul, tipe, deskripsi, bidang, tanggal } = data.body;
       const published = true;
       const file = filename;
-      const authorId = session.authorId;
-      const authorUsername = session.username;
 
       const photos = await prisma.photos.create({
         data: {
           judul: judul,
-          untuk: untuk,
+          tipe: tipe,
           tanggal: tanggal,
           bidang: bidang,
           deskripsi: deskripsi,
           published: published,
           file: file,
-          authorId: authorId,
-          authorUsername: authorUsername,
+          authorId: user_id,
+          authorUsername: username,
         },
       });
       return {
@@ -194,63 +180,33 @@ export const PhotosService = {
         });
       };
 
-      if (user_id === undefined || user_id === null) {
-        deleteFile();
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
-
-      if (!file) {
-        deleteFile();
-        return {
-          status_code: 400,
-          status: false,
-          message: "File not found",
-        };
-      }
-
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "Session not found",
-        };
-      }
-
       // jika user suoeradmin atau admin bisa mengubah semua dokumen
-      if (session.role === "admin" || session.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         // hapus file sebelumnya dalam storage
         const cek_photos = await prisma.photos.findFirst({
           where: { id_photos: parseInt(id) },
         });
 
-        if (cek_photos && cek_photos.file) {
-          try {
-            // Hapus file sebelumnya
-            const filePath = path.join(
-              process.cwd(),
-              "uploads",
-              "photos",
-              cek_photos.file
-            );
+        if (!cek_photos) {
+          deleteFile();
+          return {
+            status_code: 404,
+            status: false,
+            message: "Photo not found",
+          };
+        }
 
-            // Cek apakah file ada sebelum dihapus
-            fs.unlinkSync(filePath); // Menghapus file
-          } catch (err) {
-            return {
-              status_code: 500,
-              status: false,
-              message: err.message,
-            };
-          }
+        if (file) {
+          // Hapus file sebelumnya
+          const filePath = path.join(
+            process.cwd(),
+            "uploads",
+            "photos",
+            cek_photos.file
+          );
+
+          // Cek apakah file ada sebelum dihapus
+          fs.unlinkSync(filePath);
         }
 
         const photos = await prisma.photos.update({
@@ -265,29 +221,11 @@ export const PhotosService = {
             file: file,
           },
         });
-        if (!photos) {
-          deleteFile();
-          return {
-            status_code: 404,
-            status: false,
-            message: "photos not found",
-          };
-        }
 
         return {
           status_code: 200,
           status: true,
-          message: "photos updated",
-        };
-      }
-
-      // Jika authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (session.authorId !== user_id) {
-        deleteFile();
-        return {
-          status_code: 403,
-          status: false,
-          message: "Unauthorized",
+          message: "Photo updated",
         };
       }
 
@@ -295,6 +233,15 @@ export const PhotosService = {
       const cek_photos = await prisma.photos.findFirst({
         where: { id_photos: parseInt(id) }, // pastikan 'id' sudah diambil dari request atau sumber lain
       });
+
+      if (!cek_photos) {
+        deleteFile();
+        return {
+          status_code: 404,
+          status: false,
+          message: "Photo not found",
+        };
+      }
 
       // jika document authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
       if (cek_photos && cek_photos.authorId !== user_id) {
@@ -306,34 +253,17 @@ export const PhotosService = {
         };
       }
 
-      if (!cek_photos) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "photos not found",
-        };
-      }
+      if (file) {
+        // Hapus file sebelumnya
+        const filePath = path.join(
+          process.cwd(),
+          "uploads",
+          "photos",
+          cek_photos.file
+        );
 
-      if (cek_photos && cek_photos.file) {
-        try {
-          // Hapus file sebelumnya
-          const filePath = path.join(
-            process.cwd(),
-            "uploads",
-            "photos",
-            cek_photos.file
-          );
-
-          // Cek apakah file ada sebelum dihapus
-          fs.unlinkSync(filePath); // Menghapus file
-        } catch (err) {
-          return {
-            status_code: 500,
-            status: false,
-            message: err.message,
-          };
-        }
+        // Cek apakah file ada sebelum dihapus
+        fs.unlinkSync(filePath);
       }
 
       const photos = await prisma.photos.update({
@@ -348,19 +278,11 @@ export const PhotosService = {
           file: file,
         },
       });
-      if (!photos) {
-        deleteFile();
-        return {
-          status_code: 404,
-          status: false,
-          message: "photos not found",
-        };
-      }
 
       return {
         status_code: 200,
         status: true,
-        message: "photos updated",
+        message: "Photo updated",
       };
     } catch (error) {
       return {
@@ -375,17 +297,6 @@ export const PhotosService = {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
-      const session = await prisma.session.findFirst({
-        where: { authorId: user_id },
-      });
-
-      if (!session) {
-        return {
-          status_code: 401,
-          status: false,
-          message: "Unauthorized",
-        };
-      }
 
       // cek photos authorId
       const cek_photos = await prisma.photos.findFirst({
@@ -396,13 +307,13 @@ export const PhotosService = {
         return {
           status_code: 404,
           status: false,
-          message: "photos not found",
+          message: "Photo not found",
         };
       }
       const file = cek_photos?.file;
 
       // jika role admin atau superadmin
-      if (session.role === "admin" || session.role === "superadmin") {
+      if (role === "admin" || role === "superadmin") {
         const photos = await prisma.photos.delete({
           where: { id_photos: parseInt(id) },
         });
@@ -410,7 +321,7 @@ export const PhotosService = {
           return {
             status_code: 404,
             status: false,
-            message: "photos not found",
+            message: "Photo not found",
           };
         }
 
@@ -427,7 +338,7 @@ export const PhotosService = {
         return {
           status_code: 200,
           status: true,
-          message: "photos deleted",
+          message: "Photo deleted",
         };
       }
 
@@ -458,13 +369,93 @@ export const PhotosService = {
       return {
         status_code: 200,
         status: true,
-        message: "photos deleted",
+        message: "Photo deleted",
       };
     } catch (error) {
       return {
         status_code: 500,
         status: false,
         message: error.message,
+      };
+    }
+  },
+
+  async GetPhotosByQueryBerita(req) {
+    try {
+      const { id: user_id, role } = req.user; // Ambil user_id dan role
+      const { tipe, bidang } = req.params; // Ambil parameter tipe dan bidang
+
+      // Variabel untuk filter query
+      let tipe_query = "";
+      let bidang_query = undefined; // Default bidang kosong (tidak difilter)
+
+      // Cek tipe
+      if (tipe === "slider") {
+        tipe_query = "Slider";
+      } else if (tipe === "berita-foto") {
+        tipe_query = "Berita Foto";
+      } else if (tipe === "berita-video") {
+        tipe_query = "Berita Video";
+      } else if (tipe === "kegiatan") {
+        tipe_query = "Kegiatan";
+      } else if (tipe === "sekilas-info") {
+        tipe_query = "Sekilas Info";
+      } else if (tipe === "banner") {
+        tipe_query = "Banner";
+      } else if (tipe === "seputar-informasi") {
+        tipe_query = "Seputar Informasi";
+      } else {
+        return {
+          status_code: 400,
+          status: false,
+          message: "Invalid status",
+        };
+      }
+
+      // Cek bidang (hanya tambahkan filter jika bidang diisi)
+      if (bidang) {
+        bidang_query = bidang; // Gunakan bidang jika ada
+      }
+
+      // Filter query untuk Prisma
+      const whereCondition = {
+        tipe: tipe_query, // Filter berdasarkan tipe
+        ...(bidang_query && { bidang: bidang_query }), // Tambahkan bidang jika ada
+      };
+
+      // Jika role bukan admin atau superadmin, filter data berdasarkan authorId
+      if (role !== "admin" && role !== "superadmin") {
+        whereCondition.authorId = user_id; // Hanya data milik user tersebut
+      }
+
+      // Query ke database
+      const photos = await prisma.photos.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Jika tidak ada data yang ditemukan
+      if (!photos || photos.length === 0) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Document not found",
+        };
+      }
+
+      // Jika sukses
+      return {
+        status_code: 200,
+        status: true,
+        data: photos,
+      };
+    } catch (error) {
+      // Tangani error server
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+        message_error: error.message,
       };
     }
   },

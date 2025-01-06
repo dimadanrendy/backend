@@ -1,5 +1,22 @@
 import { PhotosService } from "../service/usePhotosService.js";
 
+export const GetPhotosByBerita = async (req, res) => {
+  try {
+    const photos = await PhotosService.GetPhotosByQueryBerita(req);
+    if (photos.status === false) {
+      return res.status(photos.status_code).json(photos);
+    }
+    return res.status(photos.status_code).json(photos);
+  } catch (error) {
+    return res.status(500).json({
+      status_code: 500,
+      status: false,
+      message: "Internal server error",
+      message_error: error.message,
+    });
+  }
+};
+
 export const GetPhotos = async (req, res) => {
   try {
     const photos = await PhotosService.GetPhotos(req);

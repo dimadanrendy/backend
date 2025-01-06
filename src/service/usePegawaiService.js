@@ -1,55 +1,54 @@
-import { AuthService } from "./useAuthService.js";
+// import { AuthService } from "./useAuthService.js";
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 
 const prisma = new PrismaClient();
 
-export const DocumentsService = {
-  async GetDocuments(req) {
+export const PegawaiService = {
+  async GetPhotos(req) {
     try {
-      const { id, role, username, email } = req.user;
-
+      const { id: user_id, role, username, email } = req.user;
       // cek role user apakah admin jika admin atau super admin tampilkan semua dokumen
       if (role === "admin" || role === "superadmin") {
-        const documents = await prisma.documents.findMany();
+        const photos = await prisma.pegawai.findMany();
 
-        if (!documents) {
+        if (!photos) {
           return {
             status_code: 404,
             status: false,
-            message: "Documents not found",
+            message: "photos not found",
           };
         }
         return {
           status_code: 200,
           status: true,
-          data: documents,
+          data: photos,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
-      const documents = await prisma.documents.findMany({
-        where: { authorId: id },
+      const photos = await prisma.pegawai.findMany({
+        where: { authorId: user_id },
       });
 
-      if (!documents) {
+      if (!photos) {
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "photos not found",
         };
       }
 
-      const documentsWithUrls = documents.map((document) => ({
-        ...document,
-        documentUrl: `${process.env.ENDPOINT_URL}/file/${document.file}`,
+      photosWithUrls = photos.map((photo) => ({
+        ...photo,
+        photoUrl: `${process.env.ENDPOINT_URL}/api/v1/file/pegawai/${photo.pegawai}`,
       }));
 
       return {
         status_code: 200,
         status: true,
-        data: documentsWithUrls,
+        data: photos,
       };
     } catch (error) {
       return {
@@ -61,18 +60,18 @@ export const DocumentsService = {
     }
   },
 
-  async GetDocumentsById(req) {
+  async GetPhotosById(req) {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
 
       // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
       if (role === "admin" || role === "superadmin") {
-        const documents = await prisma.documents.findUnique({
-          where: { id_documents: parseInt(id) },
+        const photos = await prisma.pegawai.findUnique({
+          where: { id_pegawai: parseInt(id) },
         });
 
-        if (!documents) {
+        if (!photos) {
           return {
             status_code: 404,
             status: false,
@@ -82,16 +81,16 @@ export const DocumentsService = {
         return {
           status_code: 200,
           status: true,
-          data: documents,
+          data: photos,
         };
       }
 
       // jika role user adalah user tampilkan sesuai authorId yang mereka upload
-      const documents = await prisma.documents.findUnique({
-        where: { id_documents: parseInt(id), authorId: user_id },
+      const photos = await prisma.pegawai.findUnique({
+        where: { id_pegawai: parseInt(id), authorId: user_id },
       });
 
-      if (!documents) {
+      if (!photos) {
         return {
           status_code: 404,
           status: false,
@@ -101,7 +100,7 @@ export const DocumentsService = {
       return {
         status_code: 200,
         status: true,
-        data: documents,
+        data: photos,
       };
     } catch (error) {
       return {
@@ -113,53 +112,112 @@ export const DocumentsService = {
     }
   },
 
-  async PostDocuments(data) {
+  async GetPhotosByQuery(req) {
     try {
-      const { id: user_id, role, name, username, email } = data.user;
+      const { id: user_id, role } = req.user; // Ambil user_id dan role
+      const { status, bidang } = req.params; // Ambil parameter status dan bidang
 
-      const { filename } = data.file;
-      const {
-        nomor,
-        judul,
-        tipe_dokumen,
-        dokumen,
-        bidang,
-        singkatan,
-        tahun,
-        bahasa,
-        tempat_penetapan,
-        sumber,
-        lokasi,
-      } = data.body;
+      // Variabel untuk filter query
+      let status_query = "";
+      let bidang_query = undefined; // Default bidang kosong (tidak difilter)
 
-      if (user_id === undefined || user_id === null) {
+      // Cek status
+      if (status === "pejabat-eselon") {
+        status_query = "Pejabat Eselon";
+      } else if (status === "phl") {
+        status_query = "PHL";
+      } else if (status === "pns") {
+        status_query = "PNS";
+      } else if (status === "pppk") {
+        status_query = "PPPK";
+      } else {
         return {
-          status_code: 401,
+          status_code: 400,
           status: false,
-          message: "Unauthorized",
+          message: "Invalid status",
         };
       }
 
+      // Cek bidang (hanya tambahkan filter jika bidang diisi)
+      if (bidang) {
+        bidang_query = bidang; // Gunakan bidang jika ada
+      }
+
+      // Filter query untuk Prisma
+      const whereCondition = {
+        status: status_query,
+        ...(bidang_query && { bidang: bidang_query }), // Tambahkan bidang jika ada
+      };
+
+      // Jika role bukan admin atau superadmin, filter data berdasarkan authorId
+      if (role !== "admin" && role !== "superadmin") {
+        whereCondition.authorId = user_id; // Hanya data milik user tersebut
+      }
+
+      // Query ke database
+      const photos = await prisma.pegawai.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Jika tidak ada data yang ditemukan
+      if (!photos || photos.length === 0) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Document not found",
+        };
+      }
+
+      // Jika sukses
+      return {
+        status_code: 200,
+        status: true,
+        data: photos,
+      };
+    } catch (error) {
+      // Tangani error server
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+        message_error: error.message,
+      };
+    }
+  },
+
+  async PostPhotos(data) {
+    try {
+      const { id: user_id, role, username } = data.user;
+      const { filename } = data.file;
+      const {
+        name,
+        jabatan,
+        golongan,
+        bidang,
+        nip,
+        pendidikan_terahir,
+        email,
+        status,
+      } = data.body;
+
       const published = true;
-      const file = filename;
+      const image = filename;
       const authorId = user_id;
       const authorUsername = username;
 
-      const documents = await prisma.documents.create({
+      const photos = await prisma.pegawai.create({
         data: {
-          nomor: nomor,
-          judul: judul,
-          tipe_dokumen: tipe_dokumen,
-          dokumen: dokumen,
+          name: name,
+          jabatan: jabatan,
+          golongan: golongan,
           bidang: bidang,
-          singkatan: singkatan,
-          tahun: tahun,
-          bahasa: bahasa,
-          tempat_penetapan: tempat_penetapan,
-          sumber: sumber,
-          lokasi: lokasi,
+          nip: nip,
+          pendidikan_terahir: pendidikan_terahir,
+          email: email,
+          status: status,
           published: published,
-          file: file,
+          image: image,
           authorId: authorId,
           authorUsername: authorUsername,
         },
@@ -167,10 +225,9 @@ export const DocumentsService = {
       return {
         status_code: 201,
         status: true,
-        message: "Documents created",
+        message: "Pegawai Created",
       };
     } catch (error) {
-      console.error(error.message);
       return {
         status_code: 500,
         status: false,
@@ -179,37 +236,32 @@ export const DocumentsService = {
     }
   },
 
-  async PatchDocuments(req) {
+  async PatchPhotos(req) {
     try {
-      const { id: user_id, role, username, email } = req.user;
-      const filename = req.file;
+      const { id: user_id, role, username } = req.user;
+      const { id } = req.params;
+      const { filename } = req.file;
       const {
-        id,
-        nomor,
-        judul,
-        tipe_dokumen,
-        dokumen,
+        name,
+        jabatan,
+        golongan,
         bidang,
-        singkatan,
-        tahun,
-        bahasa,
-        tempat_penetapan,
-        sumber,
-        lokasi,
+        nip,
+        pendidikan_terahir,
+        email,
         published,
       } = req.body;
 
-      const file = filename?.filename;
-
+      const image = filename;
       const publish = published === "true" ? true : false;
 
       const deleteFile = () => {
-        if (file) {
+        if (image) {
           const filePath = path.join(
             process.cwd(),
             "uploads",
-            "documents",
-            file
+            "pegawai",
+            image
           );
           fs.unlink(filePath, (err) => {
             if (err) {
@@ -223,49 +275,44 @@ export const DocumentsService = {
 
       // jika user suoeradmin atau admin bisa mengubah semua dokumen
       if (role === "admin" || role === "superadmin") {
-        // hapus file sebelumnya dalam storage
-        const cek_documents = await prisma.documents.findFirst({
-          where: { id_documents: parseInt(id) },
+        const photos = await prisma.pegawai.findFirst({
+          where: { id_pegawai: parseInt(id) },
         });
 
-        if (!cek_documents) {
+        if (!photos) {
           deleteFile();
           return {
             status_code: 404,
             status: false,
-            message: "Documents not found",
+            message: "Pegawai not found",
           };
         }
 
-        if (file) {
+        if (photos && photos.image) {
           // Hapus file sebelumnya
           const filePath = path.join(
             process.cwd(),
             "uploads",
-            "documents",
-            cek_documents.file
+            "pegawai",
+            photos.image
           );
 
           // Cek apakah file ada sebelum dihapus
           fs.unlinkSync(filePath);
         }
 
-        const documents = await prisma.documents.update({
-          where: { id_documents: parseInt(id) },
+        const documents = await prisma.pegawai.update({
+          where: { id_pegawai: parseInt(id) },
           data: {
-            nomor: nomor,
-            judul: judul,
-            tipe_dokumen: tipe_dokumen,
-            dokumen: dokumen,
+            name: name,
+            jabatan: jabatan,
+            golongan: golongan,
             bidang: bidang,
-            singkatan: singkatan,
-            tahun: tahun,
-            bahasa: bahasa,
-            tempat_penetapan: tempat_penetapan,
-            sumber: sumber,
-            lokasi: lokasi,
+            nip: nip,
+            pendidikan_terahir: pendidikan_terahir,
+            email: email,
             published: publish,
-            file: file,
+            image: image,
           },
         });
 
@@ -277,21 +324,21 @@ export const DocumentsService = {
       }
 
       // hapus file sebelumnya dalam storage
-      const cek_documents = await prisma.documents.findFirst({
-        where: { id_documents: parseInt(id) },
+      const cek_photos = await prisma.pegawai.findFirst({
+        where: { id_pegawai: parseInt(id) },
       });
 
-      if (!cek_documents) {
+      if (!cek_photos) {
         deleteFile();
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "Pegawai not found",
         };
       }
 
       // jika document authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (cek_documents && cek_documents.authorId !== user_id) {
+      if (cek_photos && cek_photos.authorId !== user_id) {
         deleteFile();
         return {
           status_code: 403,
@@ -300,14 +347,14 @@ export const DocumentsService = {
         };
       }
 
-      if (file !== null) {
+      if (image !== null) {
         try {
           // Hapus file sebelumnya
           const filePath = path.join(
             process.cwd(),
             "uploads",
             "documents",
-            cek_documents.file
+            cek_photos.image
           );
 
           // Cek apakah file ada sebelum dihapus
@@ -320,32 +367,28 @@ export const DocumentsService = {
           };
         }
       } else {
-        file = cek_documents.file;
+        image = cek_photos.image;
       }
 
-      const documents = await prisma.documents.update({
-        where: { id_documents: parseInt(id) },
+      const documents = await prisma.pegawai.update({
+        where: { id_pegawai: parseInt(id) },
         data: {
-          nomor: nomor,
-          judul: judul,
-          tipe_dokumen: tipe_dokumen,
-          dokumen: dokumen,
+          name: name,
+          jabatan: jabatan,
+          golongan: golongan,
           bidang: bidang,
-          singkatan: singkatan,
-          tahun: tahun,
-          bahasa: bahasa,
-          tempat_penetapan: tempat_penetapan,
-          sumber: sumber,
-          lokasi: lokasi,
+          nip: nip,
+          pendidikan_terahir: pendidikan_terahir,
+          email: email,
           published: publish,
-          file: file,
+          image: image,
         },
       });
 
       return {
         status_code: 200,
         status: true,
-        message: "Documents updated",
+        message: "Pegawai updated",
       };
     } catch (error) {
       return {
@@ -356,29 +399,29 @@ export const DocumentsService = {
     }
   },
 
-  async DeleteDocuments(req) {
+  async DeletePhotos(req) {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { id } = req.params;
 
       // cek documents authorId
-      const cek_documents = await prisma.documents.findFirst({
-        where: { id_documents: parseInt(id) },
+      const cek_photos = await prisma.pegawai.findFirst({
+        where: { id_pegawai: parseInt(id) },
       });
 
-      if (!cek_documents) {
+      if (!cek_photos) {
         return {
           status_code: 404,
           status: false,
-          message: "Documents not found",
+          message: "Pegawai not found",
         };
       }
-      const file = cek_documents?.file;
+      const image = cek_photos?.image;
 
       // jika role admin atau superadmin
       if (role === "admin" || role === "superadmin") {
-        const documents = await prisma.documents.delete({
-          where: { id_documents: parseInt(id) },
+        const documents = await prisma.pegawai.delete({
+          where: { id_pegawai: parseInt(id) },
         });
         if (!documents) {
           return {
@@ -388,7 +431,7 @@ export const DocumentsService = {
           };
         }
 
-        const filePath = path.join(process.cwd(), "uploads", "documents", file);
+        const filePath = path.join(process.cwd(), "uploads", "pegawai", image);
         fs.unlink(filePath, (err) => {
           if (err) {
             return {
@@ -401,12 +444,12 @@ export const DocumentsService = {
         return {
           status_code: 200,
           status: true,
-          message: "Documents deleted",
+          message: "Pegawai deleted",
         };
       }
 
       // jika documents authorId tidak sama dengan user_id, maka hanya boleh mengubah dokumen miliknya
-      if (cek_documents && cek_documents.authorId !== user_id) {
+      if (cek_photos && cek_photos.authorId !== user_id) {
         return {
           status_code: 403,
           status: false,
@@ -414,11 +457,11 @@ export const DocumentsService = {
         };
       }
 
-      await prisma.documents.delete({
-        where: { id_documents: parseInt(id) },
+      await prisma.pegawai.delete({
+        where: { id_pegawai: parseInt(id) },
       });
 
-      const filePath = path.join(process.cwd(), "uploads", "documents", file);
+      const filePath = path.join(process.cwd(), "uploads", "pegawai", image);
       fs.unlink(filePath, (err) => {
         if (err) {
           return {
@@ -432,7 +475,7 @@ export const DocumentsService = {
       return {
         status_code: 200,
         status: true,
-        message: "Documents deleted",
+        message: "Pegawai deleted",
       };
     } catch (error) {
       return {

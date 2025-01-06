@@ -59,7 +59,7 @@ model Documents {
 model Photos {
   id_photos Int @id @default(autoincrement())
   judul     String @db.LongText
-  untuk     String
+  tipe      String
   deskripsi String @db.LongText
   bidang    String
   tanggal   String
@@ -72,10 +72,28 @@ model Photos {
   updatedAt DateTime @updatedAt
 }
 
+model Pegawai {
+  id_pegawai Int @id @default(autoincrement())
+  name      String
+  jabatan   String?
+  nip       String?
+  golongan  String?
+  pendidikan_terahir   String?
+  email     String?
+  bidang    String?
+  image     String?
+  status    String?
+  authorId  String?
+  authorUsername String?
+  published Boolean @default(false)
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+}
+
 model Videos {
   id_videos Int @id @default(autoincrement())
   judul     String @db.LongText
-  untuk     String
+  tipe      String
   deskripsi String @db.LongText
   bidang    String
   tanggal   String
