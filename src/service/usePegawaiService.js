@@ -188,6 +188,7 @@ export const PegawaiService = {
 
   async PostPhotos(data) {
     try {
+      console.log(data.user);
       const { id: user_id, role, username } = data.user;
       const { filename } = data.file;
       const {
