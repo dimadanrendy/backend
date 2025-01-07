@@ -232,6 +232,7 @@ export const PegawaiService = {
         message: "Pegawai Created",
       };
     } catch (error) {
+      console.log(error);
       return {
         status_code: 500,
         status: false,
