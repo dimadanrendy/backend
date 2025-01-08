@@ -188,8 +188,6 @@ export const PegawaiService = {
 
   async PostPhotos(data) {
     try {
-      console.log(data.user);
-      console.log(data.file);
       const { id: user_id, role, username } = data.user;
       const { filename } = data.file;
       const {
@@ -225,14 +223,12 @@ export const PegawaiService = {
         },
       });
 
-      console.log(photos);
       return {
         status_code: 201,
         status: true,
         message: "Pegawai Created",
       };
     } catch (error) {
-      console.log(error);
       return {
         status_code: 500,
         status: false,
