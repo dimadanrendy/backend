@@ -179,7 +179,7 @@ export const FronendService = {
       // Query ke database
       const photos = await prisma.pegawai.findMany({
         where: whereCondition,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: "asc" },
       });
 
       // Jika tidak ada data yang ditemukan
