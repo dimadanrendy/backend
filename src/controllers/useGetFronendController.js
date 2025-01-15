@@ -14,3 +14,11 @@ export const GetPegawaiByQuery = async (req, res) => {
   }
   return res.status(photos.status_code).json(photos);
 };
+
+export const GetDokumentsByQuery = async (req, res) => {
+  const photos = await FronendService.GetDokumentsByQuery(req);
+  if (!photos || photos.status === false) {
+    return res.status(photos.status_code).json(photos);
+  }
+  return res.status(photos.status_code).json(photos);
+};

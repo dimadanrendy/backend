@@ -5,6 +5,7 @@ import {
   PatchDocuments,
   DeleteDocuments,
   GetDocumentsById,
+  GetDocumentsByQuery,
 } from "../controllers/useDocumentsController.js";
 
 import { validateDocuments } from "../middleware/useValidator.js";
@@ -18,6 +19,11 @@ const PATCH = process.env.BASE_ROUTE;
 router.get("/", useAccessRole, GetDocuments);
 router.get("/:id", useAccessRole, GetDocumentsById);
 router.post("/", useAccessRole, uploadDokumen.single("file"), PostDocuments);
+router.get(
+  "/by/:tipe_dokumen/:tahun?/:id?",
+  useAccessRole,
+  GetDocumentsByQuery
+);
 router.patch(
   "/:id",
   useAccessRole,

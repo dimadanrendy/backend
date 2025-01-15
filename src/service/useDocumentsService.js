@@ -113,6 +113,115 @@ export const DocumentsService = {
     }
   },
 
+  async GetDocumentsByQuery(req) {
+    try {
+      const { id: user_id, role, username, email } = req.user;
+      const { tipe_dokumen, tahun, id } = req.params; // Ambil parameter status dan bidang
+      console.log(req.params);
+
+      // Variabel untuk filter query
+      let tahun_query = undefined;
+      let tipe_dokumen_query = "";
+      let id_query = undefined;
+
+      // Cek status
+      if (tipe_dokumen === "lainnya") {
+        tipe_dokumen_query = "lainnya";
+      } else if (tipe_dokumen === "perwako") {
+        tipe_dokumen_query = "perwako";
+      } else if (tipe_dokumen === "perda") {
+        tipe_dokumen_query = "perda";
+      } else if (tipe_dokumen === "surat-keputusan") {
+        tipe_dokumen_query = "surat-keputusan";
+      } else {
+        return {
+          status_code: 400,
+          status: false,
+          message: "Invalid status",
+        };
+      }
+
+      // Cek tahun
+      if (tahun) {
+        tahun_query = tahun; // Gunakan tahun jika ada
+      }
+
+      // Cek id dokumen
+      if (id) {
+        id_query = id; // Gunakan id jika ada
+      }
+
+      // Filter query untuk Prisma
+      const whereCondition = {
+        ...(tahun_query && { tahun: tahun_query }),
+        tipe_dokumen: tipe_dokumen_query,
+        ...(id_query && { id_documents: id_query }),
+      };
+
+      // cek role user apakah admin jika admin atau super admin tampilkan dokumen berdasarkan id
+      if (role === "admin" || role === "superadmin") {
+        const documents = await prisma.documents.findMany({
+          where: whereCondition,
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+
+        if (!documents) {
+          return {
+            status_code: 404,
+            status: false,
+            message: "Document not found",
+          };
+        }
+
+        const documentWithUrl = documents.map((document) => ({
+          ...document,
+          documentUrl: `${process.env.ENDPOINT_URL}/access/file/documents/${document.file}`,
+        }));
+        return {
+          status_code: 200,
+          status: true,
+          data: documentWithUrl,
+        };
+      }
+
+      // jika role user adalah user tampilkan sesuai authorId yang mereka upload
+      const documents = await prisma.documents.findMany({
+        where: { authorId: user_id, ...whereCondition },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      if (!documents) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Document not found",
+        };
+      }
+
+      const documentsWithUrls = documents.map((document) => ({
+        ...document,
+        documentUrl: `${process.env.ENDPOINT_URL}/access/file/documents/${document.file}`,
+      }));
+      return {
+        status_code: 200,
+        status: true,
+        data: documentsWithUrls,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+        message_error: error.message,
+      };
+    }
+  },
+
   async PostDocuments(data) {
     try {
       const { id: user_id, role, name, username, email } = data.user;

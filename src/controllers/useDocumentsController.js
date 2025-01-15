@@ -70,3 +70,20 @@ export const GetDocumentsById = async (req, res) => {
     });
   }
 };
+
+export const GetDocumentsByQuery = async (req, res) => {
+  try {
+    const documents = await DocumentsService.GetDocumentsByQuery(req);
+    if (documents.status === false) {
+      return res.status(documents.status_code).json(documents);
+    }
+    return res.status(documents.status_code).json(documents);
+  } catch (error) {
+    return res.status(500).json({
+      status_code: 500,
+      status: false,
+      message: "Internal server error",
+      message_error: error.message,
+    });
+  }
+};

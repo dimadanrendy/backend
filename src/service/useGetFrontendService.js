@@ -212,4 +212,84 @@ export const FronendService = {
       };
     }
   },
+
+  async GetDokumentsByQuery(req) {
+    try {
+      const { tipe_dokumen, tahun, id } = req.params; // Ambil parameter status dan bidang
+
+      // Variabel untuk filter query
+      let tahun_query = undefined;
+      let tipe_dokumen_query = "";
+      let id_query = undefined;
+
+      // Cek status
+      if (tipe_dokumen === "lainnya") {
+        tipe_dokumen_query = "lainnya";
+      } else if (tipe_dokumen === "perwako") {
+        tipe_dokumen_query = "perwako";
+      } else if (tipe_dokumen === "perda") {
+        tipe_dokumen_query = "perda";
+      } else if (tipe_dokumen === "sk") {
+        tipe_dokumen_query = "sk";
+      } else {
+        return {
+          status_code: 400,
+          status: false,
+          message: "Invalid status",
+        };
+      }
+
+      // Cek tahun
+      if (tahun) {
+        tahun_query = tahun; // Gunakan tahun jika ada
+      }
+
+      // Cek id dokumen
+      if (id) {
+        id_query = id; // Gunakan id jika ada
+      }
+
+      // Filter query untuk Prisma
+      const whereCondition = {
+        ...(tahun_query && { tahun: tahun_query }),
+        tipe_dokumen: tipe_dokumen_query,
+        ...(id_query && { id_documents: id_query }),
+      };
+
+      // Query ke database
+      const document = await prisma.documents.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Jika tidak ada data yang ditemukan
+      if (!document || document.length === 0) {
+        return {
+          status_code: 404,
+          status: false,
+          message: "Data dokumen not found",
+        };
+      }
+
+      const documentWithUrl = document.map((document) => ({
+        ...document,
+        documentUrl: `${process.env.ENDPOINT_URL}/access/file/documents/${document.file}`,
+      }));
+
+      // Jika sukses
+      return {
+        status_code: 200,
+        status: true,
+        data: documentWithUrl,
+      };
+    } catch (error) {
+      // Tangani error server
+      return {
+        status_code: 500,
+        status: false,
+        message: "Internal server error",
+        message_error: error.message,
+      };
+    }
+  },
 };
