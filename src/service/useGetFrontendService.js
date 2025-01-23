@@ -254,6 +254,7 @@ export const FronendService = {
         ...(tahun_query && { tahun: tahun_query }),
         tipe_dokumen: tipe_dokumen_query,
         ...(id_query && { id_documents: id_query }),
+        published: true,
       };
 
       // Query ke database

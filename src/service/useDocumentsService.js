@@ -79,10 +79,15 @@ export const DocumentsService = {
             message: "Document not found",
           };
         }
+        const documentWithUrl = {
+          ...documents,
+          documentUrl: `${process.env.ENDPOINT_URL}/access/file/documents/${documents.file}`,
+          fileType: documents.file.split(".").pop(),
+        };
         return {
           status_code: 200,
           status: true,
-          data: documents,
+          data: documentWithUrl,
         };
       }
 
@@ -98,10 +103,17 @@ export const DocumentsService = {
           message: "Document not found",
         };
       }
+
+      const documentWithUrl = {
+        ...documents,
+        documentUrl: `${process.env.ENDPOINT_URL}/access/file/documents/${documents.file}`,
+        fileType: documents.file.split(".").pop(),
+      };
+
       return {
         status_code: 200,
         status: true,
-        data: documents,
+        data: documentWithUrl,
       };
     } catch (error) {
       return {
@@ -117,7 +129,6 @@ export const DocumentsService = {
     try {
       const { id: user_id, role, username, email } = req.user;
       const { tipe_dokumen, tahun, id } = req.params; // Ambil parameter status dan bidang
-      console.log(req.params);
 
       // Variabel untuk filter query
       let tahun_query = undefined;
@@ -212,7 +223,6 @@ export const DocumentsService = {
         data: documentsWithUrls,
       };
     } catch (error) {
-      console.log(error);
       return {
         status_code: 500,
         status: false,
