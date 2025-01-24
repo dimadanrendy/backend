@@ -275,6 +275,7 @@ export const FronendService = {
       const documentWithUrl = document.map((document) => ({
         ...document,
         documentUrl: `${process.env.ENDPOINT_URL}/access/file/documents/${document.file}`,
+        fileType: document.file.split(".").pop(),
       }));
 
       // Jika sukses
