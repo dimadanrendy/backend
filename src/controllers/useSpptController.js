@@ -11,7 +11,6 @@ export const HandleSppt = async (req, res) => {
     const response = await axios.get(url, {
       responseType: "arraybuffer", // Ambil file dalam format biner
     });
-    console.log(response);
 
     // Mengonversi array buffer menjadi string base64
     const base64String = Buffer.from(response.data, "binary").toString(
