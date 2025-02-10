@@ -7,7 +7,7 @@ export const HandleSppt = async (req, res) => {
   // const tahun = 2024;
 
   try {
-    const url = `https://pbb.pangkalpinangkota.go.id/SPPT_PDF_PANGKALPINANG/${tahun}/${angka10}/${nop}_${tahun}.pdf`;
+    const url = `https://pbb.pangkalpinangkota.go.id/SPPT_PDF_TTE/${tahun}/${angka10}/${nop}_${tahun}.pdf`;
     const response = await axios.get(url, {
       responseType: "arraybuffer", // Ambil file dalam format biner
     });
