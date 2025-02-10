@@ -3,8 +3,8 @@ import axios from "axios";
 export const HandleSppt = async (req, res) => {
   const { nop } = req.params;
   const angka10 = nop.slice(0, 10);
-  const tahun = new Date().getFullYear();
-  // const tahun = 2024;
+  // const tahun = new Date().getFullYear();
+  const tahun = 2025;
 
   try {
     const url = `https://pbb.pangkalpinangkota.go.id/SPPT_PDF_TTE/${tahun}/${angka10}/${nop}_${tahun}.pdf`;
