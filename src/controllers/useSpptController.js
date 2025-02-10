@@ -3,14 +3,15 @@ import axios from "axios";
 export const HandleSppt = async (req, res) => {
   const { nop } = req.params;
   const angka10 = nop.slice(0, 10);
-  // const tahun = new Date().getFullYear();
-  const tahun = 2025;
+  const tahun = new Date().getFullYear();
+  // const tahun = 2025;
 
   try {
-    const url = `https://pbb.pangkalpinangkota.go.id/SPPT_PDF_TTE/${tahun}/${angka10}/${nop}_${tahun}.pdf`;
+    const url = `https://pbb.pangkalpinangkota.go.id/SPPT_PDF_TTE/${tahun}/${angka10}/${nop}.pdf`;
     const response = await axios.get(url, {
       responseType: "arraybuffer", // Ambil file dalam format biner
     });
+    console.log(response);
 
     // Mengonversi array buffer menjadi string base64
     const base64String = Buffer.from(response.data, "binary").toString(
