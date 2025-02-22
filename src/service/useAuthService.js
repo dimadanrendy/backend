@@ -101,6 +101,7 @@ export const AuthService = {
     }
   },
   async LoginSession(req, res) {
+    console.log("login");
     try {
       const jwtSecret = process.env.JWT_SECRET_KEY;
       const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
