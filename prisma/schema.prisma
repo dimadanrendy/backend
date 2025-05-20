@@ -106,6 +106,39 @@ model Videos {
   updatedAt DateTime @updatedAt
 }
 
+
+model Pengaduan {
+  id_pengaduan Int @id @default(autoincrement())
+  no_pelaporan      String @unique
+  email             String
+  lingkuppengaduan  String
+  areapengaduan     String
+  namaterlapor      String
+  lokasikejadian    String
+  tanggalkejadian   String
+  waktukejadian     String
+  uraianpengaduan   String @db.LongText
+  lampiran          String
+  status            Int @default(1) // (1) Masuk (2) proses (3) selesai
+  pernyataan        Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  balasan           BalasanPengaduan[]  @relation("BalasanPengaduan")
+
+}
+
+model BalasanPengaduan {
+  id           Int      @id @default(autoincrement())
+  no_pelaporan String
+  isi_balasan  String   @db.Text
+  createdAt    DateTime @default(now())
+
+  pengaduan    Pengaduan @relation("BalasanPengaduan", fields: [no_pelaporan], references: [no_pelaporan])
+
+  @@index([no_pelaporan])
+}
+
 model Session {
   id_session Int @id @default(autoincrement())
   login_session      DateTime @default(now())

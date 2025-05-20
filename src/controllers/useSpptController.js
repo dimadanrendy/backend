@@ -6,8 +6,6 @@ export const HandleSppt = async (req, res) => {
   const tahun = new Date().getFullYear();
   // const tahun = 2025;
 
-  console.log(nop, angka10, tahun);
-
   try {
     const url = `https://pbb.pangkalpinangkota.go.id/SPPT_PDF_TTE/${tahun}/${angka10}/${nop}.pdf`;
     const response = await axios.get(url, {
@@ -22,7 +20,6 @@ export const HandleSppt = async (req, res) => {
 
     res.status(200).json(base64String);
   } catch (error) {
-    console.log(error.message);
     res.status(404).json({ message: "File not found" });
   }
 };

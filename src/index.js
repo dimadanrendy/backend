@@ -18,6 +18,7 @@ import useHandleFileRoute from "./routes/useHandleFileRoute.js";
 import useSpptRoute from "./routes/useSpptRoute.js";
 import usePegawaiRoute from "./routes/usePegawaiRoute.js";
 import useGetFronend from "./routes/useGetFronendRoute.js";
+import usePengaduanRoute from "./routes/usePengaduanRoute.js";
 
 // Middleware
 import { tokenAccessServer } from "./middleware/tokenAccessServer.js";
@@ -111,6 +112,7 @@ app.use(`${PATCH}/file`, useHandleFileRoute);
 app.use(`${PATCH}/sppt`, useSpptRoute);
 app.use(`${PATCH}/pegawai`, usePegawaiRoute);
 app.use(`${PATCH}/get`, useGetFronend);
+app.use(`${PATCH}/pengaduan`, usePengaduanRoute);
 
 app.use((req, res, next) => {
   res.status(404).send("Halaman tidak ditemukan");
